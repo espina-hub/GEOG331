@@ -29,5 +29,13 @@ Mat.bycol[,2]
 #read in weather station file from your data folder
 #copy file path requires me to add an additional \
 datW <- read.csv("Z:\\espina\\Data for Class\\noaa_weather\\2011124.csv")
-#get more information about the dataframe
+#get more information about the dataframe, answer to q1
 str(datW)
+
+#specify a column with a proper date format
+#note the format here dataframe$column
+datW$dateF <- as.Date(datW$DATE, "%Y-%m-%d")
+#create a date column by reformatting the date to only include years
+#and indicating that it should be treated as numeric data
+datW$year <- as.numeric(format(datW$dateF,"%Y"))
+#question2 now
