@@ -47,4 +47,4 @@ print(char_factor)
 #numeric example
 numeric_vector <- c(1.0, 2.0, 3.0, 4.0, 5.0)
 #integer example
-int_vector <- c(1, 2, 3, 4, 5)
+int_vector <- as.integer(numeric_vector)
