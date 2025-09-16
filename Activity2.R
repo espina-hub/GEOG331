@@ -39,3 +39,12 @@ datW$dateF <- as.Date(datW$DATE, "%Y-%m-%d")
 #and indicating that it should be treated as numeric data
 datW$year <- as.numeric(format(datW$dateF,"%Y"))
 #question2 now
+#character example 
+char_vector <- c("red","yellow", "blue", "green", "purple")
+#factor example -- convert char_vector to factor data
+char_factor <- factor(char_vector)
+print(char_factor)
+#numeric example
+numeric_vector <- c(1.0, 2.0, 3.0, 4.0, 5.0)
+#integer example
+int_vector <- c(1, 2, 3, 4, 5)
