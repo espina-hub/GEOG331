@@ -70,6 +70,7 @@ averageTemp
 colnames(averageTemp) <- c("NAME","MAAT")
 averageTemp
 #convert level to number for factor data type
+datW$NAME <- factor(datW$NAME)
 #you will have to reference the level output or look at the row of data to see the character designation.
 datW$siteN <- as.numeric(datW$NAME)
 
@@ -264,3 +265,63 @@ hist(datW$PRCP[datW$siteN == 1],
      ylab="Relative frequency",
      col="grey50",
      border="white")
+#question 8
+#calculate annual totals for all locations, each year
+#name and year are the grouping variables so it groups precipitation by name and year
+annualPrcp <- aggregate(PRCP~NAME + year, data=datW, FUN=sum, na.rm=TRUE)
+#average across all years available
+site_meanPrcp <- aggregate(PRCP~NAME + year, data=annualPrcp, FUN=mean, na.rm=TRUE)
+#pick a site name -- index to the first instance
+aberdeen <- levels(factor(annualPrcp$NAME))[1]
+#aberdeen annual totals
+aberdeen_annual <- subset(annualPrcp, NAME == aberdeen)
+
+#add thing to make it show all the charts
+par(mfrow=c(2,2))
+hist(aberdeen_annual$PRCP,
+     main = paste("Annual Precipitation -", annualPrcp$NAME[1]),
+     freq = FALSE,
+     xlab = "Average Annual Precipitation (mm)",
+     ylab = "Relative Frequency",
+     col = "pink",
+     border = "white") 
+
+#repeat for other locations
+livermore <- levels(factor(annualPrcp$NAME))[2]
+#annual totals
+livermore_annual <- subset(annualPrcp, NAME == livermore)
+hist(livermore_annual$PRCP,
+     main = paste("Annual Precipitation -", livermore),
+     freq = FALSE,
+     xlab = "Average Annual Precipitation (mm)",
+     ylab = "Relative Frequency",
+     col = "palegreen3",
+     border = "white") 
+mandan <- levels(factor(annualPrcp$NAME))[3]
+mandan_annual <- subset(annualPrcp, NAME == mandan)
+hist(mandan_annual$PRCP,
+     main = paste("Annual Precipitation -", mandan),
+     freq = FALSE,
+     xlab = "Average Annual Precipitation (mm)",
+     ylab = "Relative Frequency",
+     col = "cadetblue3",
+     border = "white") 
+
+mormon <- levels(factor(annualPrcp$NAME))[4]
+mormon_annual <- subset(annualPrcp, NAME == mormon)
+hist(mormon_annual$PRCP,
+     main = paste("Annual Precipitation -", mormon),
+     freq = FALSE,
+     xlab = "Average Annual Precipitation (mm)",
+     ylab = "Relative Frequency",
+     col = "orchid2",
+     border = "white") 
+morrisville <- levels(factor(annualPrcp$NAME))[5]
+morrisville_annual <- subset(annualPrcp, NAME == morrisville)
+hist(morrisville_annual$PRCP,
+     main = paste("Annual Precipitation -", morrisville),
+     freq = FALSE,
+     xlab = "Average Annual Precipitation (mm)",
+     ylab = "Relative Frequency",
+     col = "honeydew2",
+     border = "white") 
