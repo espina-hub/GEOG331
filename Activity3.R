@@ -1,5 +1,4 @@
 #activity3
-print("Hello World")
 #create a function. The names of the arguments for your function will be in parentheses. Everything in curly brackets will be run each time the function is run.
 
 #helpful for testing your code for errors/mistaken assumptions
@@ -20,10 +19,16 @@ a <- c(1,2,3,4)
 b <- c(8,4,5)
 assert(length(a) == length(b), "error: unequal length")
 #read in weather data, skip first 3 rows, specify NA
-weather_data <- read.csv("Z:\\espina\\Data for Class\\bewkes\\bewkes_weather.csv", na.strings=c("#N/A"), skip=3, header=FALSE)
-#print(weather_data[1,])
-sensor_info <- read.csv("Z:\\espina\\Data for Class\\bewkes\\bewkes_weather.csv", na.strings=c("#N/A"), nrows=2)
-#print(sensor_info)
+#read in weather data on mac
+weather_data <- read.csv("//Volumes//GEOG331_F25//espina//Data for Class//bewkes//bewkes_weather.csv", na.strings=c("#N/A"), skip=3, header=FALSE)
+#weather data on pc
+#weather_data <- read.csv("Z:\\espina\\Data for Class\\bewkes\\bewkes_weather.csv", na.strings=c("#N/A"), skip=3, header=FALSE)
+print(weather_data[1,])
+#sensor info on pc
+#sensor_info <- read.csv("Z:\\espina\\Data for Class\\bewkes\\bewkes_weather.csv", na.strings=c("#N/A"), nrows=2)
+#sensor info on mac
+sensor_info <- read.csv("//Volumes//GEOG331_F25//espina//Data for Class//bewkes//bewkes_weather.csv",  na.strings=c("#N/A"), nrows=2)
+print(sensor_info)
 #get column names from sensor_info table
 # and set weather station colnames  to be the same
 colnames(weather_data) <-   colnames(sensor_info)
@@ -46,7 +51,7 @@ weather_data$DD <- weather_data$doy + (weather_data$hour/24)
 weather_data[1,]
 
 #check missing data
-#see how many values have missing data for each sensor observation
+#see how many values have missing data for each sensor observation -- GET RID OF IN FINAL SUBMIT
 #air temperature
 length(which(is.na(weather_data$air.temperature)))
 #wind speed
@@ -60,4 +65,12 @@ length(which(is.na(weather_data$soil.temp)))
 #make plot using filled in points
 plot(weather_data$DD, weather_data$soil.moisture, pch=19, type="b", xlab = "Day of Year",
      ylab="Soil moisture (cm3 water per cm3 soil)")
-#stopped at qa/qc tests
+
+#QA/QC TESTS
+#make a plot with filled in points (using pch)
+#line lines
+plot(weather_data$DD, weather_data$air.temperature, pch=19, type="b", xlab = "Day of Year",
+     ylab="Air temperature (degrees C)")
+#converting unreliable data to NA -- using example of temps below freezing 
+weather_data$air.tempQ1 <- ifelse(weather_data$air.temperature < 0, NA, weather_data$air.temperature)
+#stopped at realistic values heading
