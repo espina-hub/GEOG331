@@ -104,3 +104,9 @@ assert(length(lightscale) == nrow(weather_data),
 subset_data <- weather_data[lightscale > 0, ]
 assert(nrow(subset_data) == length(which(lightscale > 0)),
        "Error: Subsetting didn’t return expected number of rows")
+#q6
+weather_data$air.tempQ2 <- ifelse(weather_data$precipitation  >= 2 & weather_data$lightning.acvitivy >0, NA,
+                          ifelse(weather_data$precipitation > 5, NA, weather_data$air.tempQ1))
+weather_data$wind.speedQ2 <- ifelse(weather_data$precipitation >= 2 & weather_data$lightning.activity >0, NA,
+                                    ifelse(weather_data$precipitation > 5, NA, weather_data$air.tempQ1))
+#assert test here
