@@ -29,6 +29,7 @@ print(weather_data[1,])
 #sensor info on mac
 sensor_info <- read.csv("//Volumes//GEOG331_F25//espina//Data for Class//bewkes//bewkes_weather.csv",  na.strings=c("#N/A"), nrows=2)
 print(sensor_info)
+#above lines answer question 3
 #get column names from sensor_info table
 # and set weather station colnames  to be the same
 colnames(weather_data) <-   colnames(sensor_info)
@@ -82,3 +83,24 @@ weather_data[weather_data$air.tempQ1 < 8,]
 #look at days with really high air temperature
 weather_data[weather_data$air.tempQ1 > 33,]  
 
+#precipitation & lightning sensor to find unreliable data - question 4
+#plot precipitation and lightning strikes on the same plot
+#normalize lighting strikes to match precipitation
+lightscale <- (max(weather_data$precipitation)/max(weather_data$lightning.acvitivy)) * weather_data$lightning.acvitivy
+plot(weather_data$DD , weather_data$precipitation, xlab = "Day of Year", ylab = "Precipitation & lightning",
+     type="n")
+#plot precipitation points only when there is precipitation 
+#make the points semi-transparent
+points(weather_data$DD[weather_data$precipitation > 0], weather_data$precipitation[weather_data$precipitation > 0],
+       col= rgb(95/255,158/255,160/255,.5), pch=15)   
+#plot lightning points only when there is lightning     
+points(weather_data$DD[lightscale > 0], lightscale[lightscale > 0],
+       col= "tomato3", pch=19)
+#assert function to provide evidence
+#first, proves the lengths match
+assert(length(lightscale) == nrow(weather_data),
+       "Error: lightscale must be the same length as weather_data rows")
+
+subset_data <- weather_data[lightscale > 0, ]
+assert(nrow(subset_data) == length(which(lightscale > 0)),
+       "Error: Subsetting didn’t return expected number of rows")
