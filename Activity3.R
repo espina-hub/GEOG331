@@ -99,14 +99,20 @@ points(weather_data$DD[lightscale > 0], lightscale[lightscale > 0],
 #assert function to provide evidence
 #first, proves the lengths match
 assert(length(lightscale) == nrow(weather_data),
-       "Error: lightscale must be the same length as weather_data rows")
+       "Error: lightscale is not the same length as weather_data rows")
 
-subset_data <- weather_data[lightscale > 0, ]
-assert(nrow(subset_data) == length(which(lightscale > 0)),
-       "Error: Subsetting didn’t return expected number of rows")
 #q6
-weather_data$air.tempQ2 <- ifelse(weather_data$precipitation  >= 2 & weather_data$lightning.acvitivy >0, NA,
+weather_data$air.tempQ2 <- ifelse(weather_data$precipitation  >= 2 & weather_data$lightning.acvitivy > 0, NA,
                           ifelse(weather_data$precipitation > 5, NA, weather_data$air.tempQ1))
-weather_data$wind.speedQ2 <- ifelse(weather_data$precipitation >= 2 & weather_data$lightning.activity >0, NA,
-                                    ifelse(weather_data$precipitation > 5, NA, weather_data$air.tempQ1))
-#assert test here
+#begin cleaning data, replace any record where wind speed is less than 0 with NA
+weather_data$wind.speedQ1<- ifelse(weather_data$wind.speed < 0, NA, weather_data$wind.speed)
+#continue cleaning data by adding the storm filter from above in airtemp
+weather_data$wind.speedQ2 <- ifelse(weather_data$precipitation >= 2 & weather_data$lightning.activity > 0, NA,
+                                    ifelse(weather_data$precipitation > 5, NA, weather_data$wind.speedQ1))
+#assert test here -- make sure the "NA" values were input 
+#there should be more "NA" values now than there was before 
+assert(sum(is.na(weather_data$wind.speedQ2)) > sum(is.na(weather_data$wind.speed)),"Error: wind.speedQ2 does not have any new NA values")
+#time to create a plot - using the earlier format, but doing type = b to include points and lines
+#also make it pink hardy har har
+plot(weather_data$DD, weather_data$wind.speedQ2, xlab = "Day of Year", ylab = "Wind Speed - No Storms (m/s)", main = "Cleaned Wind Speed (points and lines)", type = "b", pch=15, col = "palevioletred")
+
