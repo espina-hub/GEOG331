@@ -74,3 +74,11 @@ plot(weather_data$DD, weather_data$air.temperature, pch=19, type="b", xlab = "Da
 #converting unreliable data to NA -- using example of temps below freezing 
 weather_data$air.tempQ1 <- ifelse(weather_data$air.temperature < 0, NA, weather_data$air.temperature)
 #stopped at realistic values heading
+#check the values at the extreme range of the data
+#and throughout the percentiles
+quantile(weather_data$air.tempQ1)
+#look at days with really low air temperature
+weather_data[weather_data$air.tempQ1 < 8,]
+#look at days with really high air temperature
+weather_data[weather_data$air.tempQ1 > 33,]  
+
