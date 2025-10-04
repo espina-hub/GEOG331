@@ -22,12 +22,9 @@ sensor_info <- read.csv("//Volumes//GEOG331_F25//espina//Data for Class//bewkes/
 # and set weather station colnames  to be the same
 colnames(weather_data) <- colnames(sensor_info)
 #preview data
-#print(weather_data([1,])
+
 #use install.packages to install lubridate
 #install.packages(c("lubridate"))
-#it is helpful to comment this line after you run this line of code on the computer
-#and the package installs. You really don't want to do this over and over again. 
-#library function loads package to working environment
 library(lubridate)
 #returns message says objects are masked from base package:base
 #objects exist in both packages, lubridate is overriding the base R functions
@@ -38,25 +35,12 @@ weather_data$doy <- yday(dates)
 weather_data$hour <- hour(dates) + (minute(dates)/60)
 weather_data$DD <- weather_data$doy + (weather_data$hour/24)
 
-#check missing data
-#see how many values have missing data for each sensor observation -- GET RID OF IN FINAL SUBMIT
-#air temperature
-length(which(is.na(weather_data$air.temperature)))
-#wind speed
-length(which(is.na(weather_data$wind.speed)))
-#precipitation
-length(which(is.na(weather_data$precipitation)))
-#soil temperature
-length(which(is.na(weather_data$soil.moisture)))
-#soil moisture
-length(which(is.na(weather_data$soil.temp)))
 #make plot using filled in points
 plot(weather_data$DD, weather_data$soil.moisture, pch=19, type="b", xlab = "Day of Year",
      ylab="Soil moisture (cm3 water per cm3 soil)")
 
 #QA/QC TESTS
 #make a plot with filled in points (using pch)
-#line lines
 plot(weather_data$DD, weather_data$air.temperature, pch=19, type="b", xlab = "Day of Year",
      ylab="Air temperature (degrees C)")
 #converting unreliable data to NA -- using example of temps below freezing 
