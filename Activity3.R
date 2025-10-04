@@ -1,29 +1,18 @@
 #activity3
 #create a function. The names of the arguments for your function will be in parentheses. Everything in curly brackets will be run each time the function is run.
-
 #helpful for testing your code for errors/mistaken assumptions
 assert <- function(statement,err.message){
   #if evaluates if a statement is true or false for a single item
   if(statement == FALSE){
     print(err.message)
   }
-  
 }
-#check how the statement works
-#evaluate a false statement
-assert(1 == 2, "error: unequal values")
-#evaluate a true statement
-assert(2 == 2, "error: unequal values")
-#set up assert to check if two vectors are the same length
-a <- c(1,2,3,4)
-b <- c(8,4,5)
-assert(length(a) == length(b), "error: unequal length")
+
 #read in weather data, skip first 3 rows, specify NA
 #read in weather data on mac
 weather_data <- read.csv("//Volumes//GEOG331_F25//espina//Data for Class//bewkes//bewkes_weather.csv", na.strings=c("#N/A"), skip=3, header=FALSE)
 #weather data on pc
 #weather_data <- read.csv("Z:\\espina\\Data for Class\\bewkes\\bewkes_weather.csv", na.strings=c("#N/A"), skip=3, header=FALSE)
-print(weather_data[1,])
 #sensor info on pc
 #sensor_info <- read.csv("Z:\\espina\\Data for Class\\bewkes\\bewkes_weather.csv", na.strings=c("#N/A"), nrows=2)
 #sensor info on mac
@@ -140,8 +129,7 @@ n_precip <- sum(!is.na(weather_data$precipitation))
 
 #find dates covered, add it into table
 range_dates <- range(weather_data$timestamp, na.rm = TRUE)
-# Format the existing range nicely
-# `range_dates` already exists from earlier code
+#format it 
 start_str <- format(min(dates, na.rm = TRUE), "%b %d, %Y")
 end_str   <- format(max(dates, na.rm = TRUE), "%b %d, %Y")
 #make a table -- using data.frame so it appears in the console 
@@ -154,4 +142,32 @@ results$Average_or_Total <- c(round(mean_airtemp, 1), round(mean_windspeed, 1), 
 results$Period <- paste(start_str, "to", end_str)
 results
 
+#question 9 YAYYY
+## Same x-axis for all four panels -- set it so i dont have to do it later lol
+xr <- range(weather_data$DD, na.rm = TRUE)
+par(mfrow = c(2, 2), mar = c(4,4,2.5,1))
+# soil moisture
+plot(weather_data$DD, weather_data$soil.moisture,
+     type = "b", pch = 1, col = "forestgreen",
+     xlab = "Day of Year", ylab = "Soil moisture (cm³/cm³)",
+     xlim = xr, main = "Soil moisture")
+
+#soil temp
+plot(weather_data$DD, weather_data$soil.temp,
+     type = "b", pch = 1, col = "darkgoldenrod4",
+     xlab = "Day of Year", ylab = "Soil temperature (°C)",
+     xlim = xr, main = "Soil temperature")
+
+#precipitation
+plot(weather_data$DD, weather_data$precipitation,
+     type = "h", col = "darkorchid1",
+     xlab = "Day of Year", ylab = "Precipitation (mm)",
+     xlim = xr, main = "Precipitation")
+
+#air temperature
+plot(weather_data$DD, weather_data$air.temperature,
+     type = "b", pch = 1, col = "deeppink4",
+     xlab = "Day of Year", ylab = "Air temperature (°C)",
+     xlim = xr, main = "Air temperature")
+#ALL DONE
 
