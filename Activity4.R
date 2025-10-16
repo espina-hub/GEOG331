@@ -76,4 +76,4 @@ ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, color = Species, size = Peta
 #color, size, etc. within the function. in ggplot, it is separated. the aes() 
 #function controls what is plotted (the contents -- x/y/color) but everything
 #else goes in a separate piece, joined by "+". ggplot uses layers to add to
-#a plot. 
+#a plot which is done separately from the initial aes fn. 
