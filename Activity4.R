@@ -18,7 +18,16 @@ library(tidyverse)
 
 # hint: consider using a list, and also new vectors for regression variables
 
+versicolor <- subset(iris, Species == "versicolor")
+variables <- c(versicolor$Sepal.Length ~ versicolor$Sepal.Width, 
+               versicolor$Petal.Length ~ versicolor$Petal.Width, 
+               versicolor$Sepal.Length ~ versicolor$Petal.Length)
+models <- list()
 
+for (item in variables) {
+  lm <- lm(data)
+  #models [[lm]] <- model
+}
 
 #####################################
 ##### Part 2: data in dplyr     #####
