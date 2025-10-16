@@ -71,3 +71,9 @@ ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, color = Species, size = Peta
 ##### arguments differ between  #####
 ##### plot and ggplot?          #####
 #####################################		
+# the arguments differ between regular and ggplot in that in base R, all the
+#information regarding the plot goes into the plot function. we specify the 
+#color, size, etc. within the function. in ggplot, it is separated. the aes() 
+#function controls what is plotted (the contents -- x/y/color) but everything
+#else goes in a separate piece, joined by "+". ggplot uses layers to add to
+#a plot. 
