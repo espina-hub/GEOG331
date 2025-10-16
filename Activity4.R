@@ -19,39 +19,47 @@ library(tidyverse)
 # hint: consider using a list, and also new vectors for regression variables
 
 versicolor <- subset(iris, Species == "versicolor")
-variables <- c(versicolor$Sepal.Length ~ versicolor$Sepal.Width, 
+variables <- list(versicolor$Sepal.Length ~ versicolor$Sepal.Width, 
                versicolor$Petal.Length ~ versicolor$Petal.Width, 
                versicolor$Sepal.Length ~ versicolor$Petal.Length)
 models <- list()
 
 for (item in variables) {
-  lm <- lm(data)
-  #models [[lm]] <- model
+  model <- lm(item, data = versicolor)
+  print (summary(model))
+  models[[deparse(item)]] <- summary(model)$coefficients 
 }
+#deparse adds the names of each model so i can differentiate
+#converts formula to text 
+models
 
 #####################################
 ##### Part 2: data in dplyr     #####
 #####################################
-
+install.packages("dplyr")
+library(dplyr)
 #use dplyr to join data of maximum height
 #to a new iris data frame
 height <- data.frame(Species = c("virginica","setosa","versicolor"),
                      Height.cm = c(60,100,11.8))
 
-
+iris_with_height <- left_join(iris, height, by = "Species")
 
 #####################################
 ##### Part 3: plots in ggplot2  #####
 #####################################
+library(ggplot2)
 
 #look at base R scatter plot
 plot(iris$Sepal.Length,iris$Sepal.Width)
 
 #3a. now make the same plot in ggplot
-
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width)) + geom_point()
+#geom_point makes it a scatter plot
 
 #3b. make a scatter plot with ggplot and get rid of  busy grid lines
-
+ggplot(iris, aes(Sepal.Length, Sepal.Width)) + geom_point() + theme_classic()
+#adding theme_classic gets rid of the ugly stuff (grid lines, color)
 
 #3c. make a scatter plot with ggplot, remove grid lines, add a title and axis labels, 
 #    show species by color, and make the point size proportional to petal length
