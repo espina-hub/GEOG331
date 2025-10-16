@@ -63,6 +63,8 @@ ggplot(iris, aes(Sepal.Length, Sepal.Width)) + geom_point() + theme_classic()
 
 #3c. make a scatter plot with ggplot, remove grid lines, add a title and axis labels, 
 #    show species by color, and make the point size proportional to petal length
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, color = Species, size = Petal.Length)) + geom_point() + theme_classic() + 
+  labs(title = "Iris Sepal Dimensions by Species", x = "Sepal Length (cm)", y = "Sepal Width (cm)", size = "Petal Length (cm)")
 
 #####################################
 ##### Question: how did         #####
