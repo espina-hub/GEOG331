@@ -26,7 +26,6 @@ models <- list()
 
 for (item in variables) {
   model <- lm(item, data = versicolor)
-  print (summary(model))
   models[[deparse(item)]] <- summary(model)$coefficients 
 }
 #deparse adds the names of each model so i can differentiate
