@@ -1,4 +1,6 @@
 library(lubridate)
+library(ggplot2) #for later
+
 stream_data <- read.csv("//Volumes//GEOG331_F25//espina//Data for Class//hw5_data//stream_flow_data.csv", na.strings = c("Eqp"))
 ## desktop code to read in data
 ##("Z:\\espina\\Data for Class\\hw5_data\\stream_flow_data.csv", na.strings = c("Eqp"))
@@ -209,7 +211,7 @@ for (i in seq_len(nrow(hydroP_w))) {
           border = NA)
 }
 
-library(ggplot2)
+
 #specify year as a factor
 reliable_data$yearPlot <- as.factor(reliable_data$year)
 #make a boxplot
