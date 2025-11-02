@@ -127,7 +127,6 @@ legend("topright",
 
 #question 7: data frame that indicates what days have full 24 hours of precip measurements
 #plot all of them and symbolize the data that has the full 24
-
 #count # of precip measurements per day
 precip_counts <- aggregate(precip_data$HPCP, 
                         by = list(precip_data$year, precip_data$doy),
@@ -165,7 +164,7 @@ legend("topright",
        col=c("gray60","dodgerblue"),
        bty="n")
 
-#hydrograph time
+#hydrograph time - EXAMPLE
 #subsest discharge and precipitation within range of interest
 hydroD <- reliable_data[reliable_data$doy >= 248 & reliable_data$doy < 250 & reliable_data$year == 2011,]
 hydroP <- precip_data[precip_data$doy >= 248 & precip_data$doy < 250 & precip_data$year == 2011,]
@@ -199,31 +198,32 @@ for(i in 1:nrow(hydroP)){
           c(yl,hydroP$pscale[i],hydroP$pscale[i],yl),
           col=rgb(0.392, 0.584, 0.929,.2), border=NA)
 }
-#question 8 home stretch
-#Feb 17–18, 2017
 
+
+#question 8 home stretch
+#Feb 17–18, 2011
 # subset discharge and precip
 hydroD_w <- reliable_data[reliable_data$doy >= 48 & reliable_data$doy < 50 & reliable_data$year == 2011, ]
+hydroP_w <- precip_data[precip_data$doy >= 48 & precip_data$doy < 50 & precip_data$year == 2011, ]
 
-hydroP_w <- precip_data[precip_data$doy >= 48 &
-                          precip_data$doy < 50 &
-                          precip_data$year == 2017, ]
+min(hydroD_w$discharge)
 
 # turn NA precip into 0 so max() works
-hydroP_w$HPCP[is.na(hydroP_w$HPCP)] <- 0
+#hydroP_w$HPCP[is.na(hydroP_w$HPCP)] <- 0
 
 # discharge range
 yl_w <- floor(min(hydroD_w$discharge)) - 1
 yh_w <- ceiling(max(hydroD_w$discharge)) + 1
 
-# precip range (safe)
+# precip range
 pl_w <- 0
-pm_w <- 1   # since there is basically no liquid precip in winter
+pm_w <- ceiling(max(hydroP_w$HPCP)) + .5  
 # scale precip
 hydroP_w$pscale <- (((yh_w - yl_w) / (pm_w - pl_w)) * hydroP_w$HPCP) + yl_w
 
 # plot discharge
 par(mai = c(1,1,1,1))
+
 plot(hydroD_w$decDay,
      hydroD_w$discharge,
      type = "l",
