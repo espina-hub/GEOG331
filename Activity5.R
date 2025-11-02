@@ -8,7 +8,6 @@ stream_data <- read.csv("//Volumes//GEOG331_F25//espina//Data for Class//hw5_dat
 precip_data <- read.csv("//Volumes//GEOG331_F25//espina//Data for Class//hw5_data//2049867.csv")
 ## desktop code
 ##("Z:\\espina\\Data for Class\\hw5_data\\2049867.csv")                            
-head(precip_data)
 reliable_data <- stream_data[stream_data$discharge.flag == "A",]
 
 #### define time for streamflow #####
@@ -77,18 +76,52 @@ polygon(c(aveF$doy, rev(aveF$doy)),#x coordinates
         col=rgb(0.392, 0.584, 0.929,.2), #color that is semi-transparent
         border=NA #no border
         )   
-month_ticks <- yday(ymd(paste(2017, 1:12, 1, sep = "-")))
-axis(1, at = month_ticks, labels = month.abb, las = 2)
+axis(1, seq(0,360, by=40), #tick intervals
+     lab=seq(0,360, by=40)) #tick labels
 axis(2, seq(0,80, by=20),
-   labels = seq(0, 80, by=20),
-   las = 2)#show ticks at 90 degree angle
-flow_2017 <- subset(reliable_data, year == 2017) #question 5 this line and below
-lines(flow_2017$doy, flow_2017$discharge, col="tomato3", lwd=2)
-legend("topright", c("mean","1 standard deviation"), #legend items
-       lwd=c(2,NA),#lines
-       col=c("black",rgb(0.392, 0.584, 0.929,.2)),#colors
-       pch=c(NA,15),#symbols
-       fill=c(NA,rgb(0.392, 0.584, 0.929,.2)),#fill boxes
+     seq(0,80, by=20),
+     las = 2)#show ticks at 90 degree angle
+
+#question 5
+flow_2017 <- subset(reliable_data, year == 2017) #get 2017 data, not a leap year
+avg_2017 <- aggregate(discharge ~ doy, flow_2017, mean, na.rm = TRUE)
+colnames(avg_2017) <- c("doy", "daily2017")
+
+ymax <- max(c(aveF$dailyAve + sdF$dailySD, avg_2017$discharge), na.rm = TRUE)
+ymax <- ceiling(ymax/10)* 10 #round
+
+month_ticks <- yday(ymd(paste(2017, 1:12, 1, sep = "-")))
+
+#plot
+par(mai = c(1, 1, 1, 1))
+
+plot(aveF$doy, aveF$dailyAve, type = "l",
+     xlab = "Month",
+     ylab = expression(paste("Discharge ft "^"3 ", "sec"^"-1")),
+     lwd = 2,
+     ylim = c(0, ymax), #extend from example plot
+     xlim = c(1, 365),
+     xaxs = "i", yaxs = "i",
+     axes = FALSE)
+
+#SD polygon
+polygon(c(aveF$doy, rev(aveF$doy)),
+        c(aveF$dailyAve - sdF$dailySD,
+          rev(aveF$dailyAve + sdF$dailySD)),
+        col = rgb(0.392, 0.584, 0.929, .2),
+        border = NA)
+
+axis(1, at = month_ticks, labels = month.abb, las = 2)
+axis(2, las = 2)#show ticks at 90 degree angle
+
+#add 2017 line
+lines(avg_2017$doy, avg_2017$daily2017, col="tomato3", lwd=2)
+
+legend("topright", 
+       c("mean","1 standard deviation", "2017"), #legend items
+       lwd=c(2,NA, 2),#lines
+       col=c("black", NA, "tomato3"),#colors
+       fill=c(NA, rgb(0.392, 0.584, 0.929,.2), NA),#fill boxes
        border=NA,#no border for both fill boxes (don't need a vector here since both are the same)
        bty="n")#no legend border
 
@@ -170,9 +203,7 @@ for(i in 1:nrow(hydroP)){
 #Feb 17–18, 2017
 
 # subset discharge and precip
-hydroD_w <- reliable_data[reliable_data$doy >= 48 &
-                            reliable_data$doy < 50 &
-                            reliable_data$year == 2017, ]
+hydroD_w <- reliable_data[reliable_data$doy >= 48 & reliable_data$doy < 50 & reliable_data$year == 2011, ]
 
 hydroP_w <- precip_data[precip_data$doy >= 48 &
                           precip_data$doy < 50 &
