@@ -1,10 +1,11 @@
+#load packages
 library(lubridate)
 library(ggplot2) #for later
 
+#read in data
 stream_data <- read.csv("//Volumes//GEOG331_F25//espina//Data for Class//hw5_data//stream_flow_data.csv", na.strings = c("Eqp"))
 ## desktop code to read in data
 ##("Z:\\espina\\Data for Class\\hw5_data\\stream_flow_data.csv", na.strings = c("Eqp"))
-             
 precip_data <- read.csv("//Volumes//GEOG331_F25//espina//Data for Class//hw5_data//2049867.csv")
 ## desktop code
 ##("Z:\\espina\\Data for Class\\hw5_data\\2049867.csv")                            
@@ -58,14 +59,15 @@ dev.new(width=8,height=8)
 #bigger margins
 par(mai=c(1,1,1,1))
 
-#2017 data
+# 2017 data
 flow_2017 <- subset(reliable_data, year == 2017) #get 2017 data, not a leap year
 avg_2017 <- aggregate(discharge ~ doy, flow_2017, mean, na.rm = TRUE)
 colnames(avg_2017) <- c("doy", "daily2017")
-
+#set upper limit
 ymax <- max(c(aveF$dailyAve + sdF$dailySD, avg_2017$discharge), na.rm = TRUE)
 ymax <- ceiling(ymax/10)* 10 #round
 
+#set month ticks
 month_ticks <- yday(ymd(paste(2017, 1:12, 1, sep = "-")))
 
 #plot
@@ -78,7 +80,7 @@ plot(aveF$doy, aveF$dailyAve, type = "l",
      xaxs = "i", yaxs = "i",
      axes = FALSE)
 
-#SD polygon
+#standard deviation polygon
 polygon(c(aveF$doy, rev(aveF$doy)),
         c(aveF$dailyAve - sdF$dailySD,
           rev(aveF$dailyAve + sdF$dailySD)),
@@ -90,6 +92,7 @@ axis(2, las = 2)#show ticks at 90 degree angle
 #add 2017 line
 lines(avg_2017$doy, avg_2017$daily2017, col="tomato3", lwd=2)
 
+#add legend
 legend("topright", 
        c("mean","1 standard deviation", "2017"), #legend items
        lwd=c(2,NA, 2),#lines
@@ -104,11 +107,10 @@ legend("topright",
 precip_counts <- aggregate(precip_data$HPCP, 
                         by = list(year = precip_data$year, doy = precip_data$doy),
                         FUN = length)
-#names(precip_counts)[3] <- "num rows"
 colnames(precip_counts) <- c("year", "doy", "num_rows")
+
 #find days with complete measurements
 precip_counts$full_day <- precip_counts$num_rows == 24
-
 
 #add streamflow data -- join using the matching columns (year,doy)
 flow_precip <- merge(reliable_data, precip_counts,
@@ -128,7 +130,6 @@ plot(flow_precip$decYear, flow_precip$discharge,
      col="gray",
      xlab="Year",
      ylab=expression(paste("Discharge ft"^"3"," sec"^"-1")))
-
 points(flow_precip$decYear[flow_precip$full_day],
        flow_precip$discharge[flow_precip$full_day],
        pch=16,
@@ -141,13 +142,7 @@ legend("topright",
        bty="n")
 
 
-names(reliable_data)
-names(precip_counts)
-str(reliable_data[,1:10])
-str(precip_counts)
-
-
-#hydrograph time - EXAMPLE
+#hydrograph time - EXAMPLE 
 #subsest discharge and precipitation within range of interest
 hydroD <- reliable_data[reliable_data$doy >= 248 & reliable_data$doy < 250 & reliable_data$year == 2011,]
 hydroP <- precip_data[precip_data$doy >= 248 & precip_data$doy < 250 & precip_data$year == 2011,]
@@ -264,3 +259,4 @@ ggplot(data = flow17,
        x = "Season",
        y = expression(paste("Discharge ft"^"3"," sec"^"-1"))) +
   theme_bw()
+
