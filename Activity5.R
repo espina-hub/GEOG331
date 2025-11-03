@@ -46,43 +46,19 @@ precip_data$decYear <- ifelse(leap_year(precip_data$year), precip_data$year + (p
 #plot discharge
 plot(reliable_data$decYear, reliable_data$discharge, type="l", xlab="Year", ylab=expression(paste("Discharge ft"^"3 ","sec"^"-1")))
 
-#question 4 -- coming back to later
-?expression
-??leap_year
-
 #basic formatting
 aveF <- aggregate(reliable_data$discharge, by=list(reliable_data$doy), FUN="mean")
 colnames(aveF) <- c("doy","dailyAve")
 sdF <- aggregate(reliable_data$discharge, by=list(reliable_data$doy), FUN="sd")
 colnames(sdF) <- c("doy","dailySD")
 
+#question 5
 #new plot
 dev.new(width=8,height=8)
 #bigger margins
 par(mai=c(1,1,1,1))
 
-#make plot
-plot(aveF$doy,aveF$dailyAve, 
-     type="l", 
-     xlab="Year", ##potentially change to "Day of Year" to make it more accurate
-     ylab=expression(paste("Discharge ft"^"3 ","sec"^"-1")),
-     lwd=2,
-     ylim=c(0,90),
-     xaxs="i", yaxs ="i",#remove gaps from axes
-     axes=FALSE)#no axes
-polygon(c(aveF$doy, rev(aveF$doy)),#x coordinates
-        c(aveF$dailyAve-sdF$dailySD,
-          rev(aveF$dailyAve+sdF$dailySD)),#ycoord
-        col=rgb(0.392, 0.584, 0.929,.2), #color that is semi-transparent
-        border=NA #no border
-        )   
-axis(1, seq(0,360, by=40), #tick intervals
-     lab=seq(0,360, by=40)) #tick labels
-axis(2, seq(0,80, by=20),
-     seq(0,80, by=20),
-     las = 2)#show ticks at 90 degree angle
-
-#question 5
+#2017 data
 flow_2017 <- subset(reliable_data, year == 2017) #get 2017 data, not a leap year
 avg_2017 <- aggregate(discharge ~ doy, flow_2017, mean, na.rm = TRUE)
 colnames(avg_2017) <- c("doy", "daily2017")
@@ -93,8 +69,6 @@ ymax <- ceiling(ymax/10)* 10 #round
 month_ticks <- yday(ymd(paste(2017, 1:12, 1, sep = "-")))
 
 #plot
-par(mai = c(1, 1, 1, 1))
-
 plot(aveF$doy, aveF$dailyAve, type = "l",
      xlab = "Month",
      ylab = expression(paste("Discharge ft "^"3 ", "sec"^"-1")),
@@ -110,7 +84,6 @@ polygon(c(aveF$doy, rev(aveF$doy)),
           rev(aveF$dailyAve + sdF$dailySD)),
         col = rgb(0.392, 0.584, 0.929, .2),
         border = NA)
-
 axis(1, at = month_ticks, labels = month.abb, las = 2)
 axis(2, las = 2)#show ticks at 90 degree angle
 
@@ -129,18 +102,20 @@ legend("topright",
 #plot all of them and symbolize the data that has the full 24
 #count # of precip measurements per day
 precip_counts <- aggregate(precip_data$HPCP, 
-                        by = list(precip_data$year, precip_data$doy),
+                        by = list(year = precip_data$year, doy = precip_data$doy),
                         FUN = length)
-colnames(precip_counts) <- c("year", "doy", "num_obs")
-
+#names(precip_counts)[3] <- "num rows"
+colnames(precip_counts) <- c("year", "doy", "num_rows")
 #find days with complete measurements
-precip_counts$full_day <- precip_counts$num_obs == 24
+precip_counts$full_day <- precip_counts$num_rows == 24
+
 
 #add streamflow data -- join using the matching columns (year,doy)
 flow_precip <- merge(reliable_data, precip_counts,
                      by = c("year", "doy"),
                      all.x = TRUE) #keep all rows from reliable_data even if there isn't a match
 #replace missing full_day values with false
+flow_precip$num_rows [is.na(flow_precip$num_obs)] <- 0L
 flow_precip$full_day[is.na(flow_precip$full_day)] <- FALSE
 
 #now plot
@@ -148,8 +123,8 @@ dev.new(width=8,height=8)
 par(mai=c(1,1,1,1))
 
 plot(flow_precip$decYear, flow_precip$discharge,
-     type="p",
-     pch=16,
+     type="l",
+     lwd = 2,
      col="gray",
      xlab="Year",
      ylab=expression(paste("Discharge ft"^"3"," sec"^"-1")))
@@ -160,9 +135,17 @@ points(flow_precip$decYear[flow_precip$full_day],
        col="dodgerblue")
 legend("topright",
        legend=c("All discharge","Days with full precip data"),
-       pch=16,
+       pch= c(NA, 16),
+       lwd = c(2, NA),
        col=c("gray60","dodgerblue"),
        bty="n")
+
+
+names(reliable_data)
+names(precip_counts)
+str(reliable_data[,1:10])
+str(precip_counts)
+
 
 #hydrograph time - EXAMPLE
 #subsest discharge and precipitation within range of interest
