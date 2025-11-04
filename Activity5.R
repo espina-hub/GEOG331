@@ -139,8 +139,7 @@ legend("topright",
        pch= c(NA, 16),
        lwd = c(2, NA),
        col=c("gray60","dodgerblue"),
-       bty="n")
-
+       bty="n")\
 
 #hydrograph time - EXAMPLE 
 #subsest discharge and precipitation within range of interest
@@ -177,17 +176,11 @@ for(i in 1:nrow(hydroP)){
           col=rgb(0.392, 0.584, 0.929,.2), border=NA)
 }
 
-
 #question 8 home stretch
 #Feb 17–18, 2011
 # subset discharge and precip
 hydroD_w <- reliable_data[reliable_data$doy >= 48 & reliable_data$doy < 50 & reliable_data$year == 2011, ]
 hydroP_w <- precip_data[precip_data$doy >= 48 & precip_data$doy < 50 & precip_data$year == 2011, ]
-
-min(hydroD_w$discharge)
-
-# turn NA precip into 0 so max() works
-#hydroP_w$HPCP[is.na(hydroP_w$HPCP)] <- 0
 
 # discharge range
 yl_w <- floor(min(hydroD_w$discharge)) - 1
@@ -209,7 +202,7 @@ plot(hydroD_w$decDay,
      lwd = 2,
      xlab = "Day of year",
      ylab = expression(paste("Discharge ft"^"3"," sec"^"-1")),
-     main = "Winter hydrograph (Feb 17–18, 2017)")
+     main = "Winter hydrograph (Feb 17–18, 2011)")
 
 # add precip bars (will do nothing if there are 0 rows)
 for (i in seq_len(nrow(hydroP_w))) {
@@ -217,9 +210,7 @@ for (i in seq_len(nrow(hydroP_w))) {
             hydroP_w$decDay[i]+0.017, hydroP_w$decDay[i]+0.017),
           c(yl_w, hydroP_w$pscale[i], hydroP_w$pscale[i], yl_w),
           col = rgb(0.392, 0.584, 0.929, .2),
-          border = NA)
-}
-
+          border = NA)}
 
 #specify year as a factor
 reliable_data$yearPlot <- as.factor(reliable_data$year)
@@ -259,4 +250,3 @@ ggplot(data = flow17,
        x = "Season",
        y = expression(paste("Discharge ft"^"3"," sec"^"-1"))) +
   theme_bw()
-
