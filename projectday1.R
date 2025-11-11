@@ -3,10 +3,6 @@
 #install.packages("MODISTools")
 
 library(terra)
-library(gdalUtilities)
-library(stringr)
-library(ggplot2)
-library(MODISTools)
 
 # Path to your MODIS HDF file -- file contains tile that phoenix is included in
 file <- "Z:\\espina\\Data for Class\\final project data\\MOD21A1N.A2000173.h08v05.061.2020046031144.hdf"
