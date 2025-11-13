@@ -3,24 +3,32 @@
 library(terra)
 
 # Path to your MODIS HDF file -- file contains tile that phoenix is included in
-file <- "Z:\\espina\\Data for Class\\final project data\\MOD21A1N.A2000173.h08v05.061.2020046031144.hdf"
+#desktop file
+#file <- "Z:\\espina\\Data for Class\\final project data\\MOD21A1N.A2000173.h08v05.061.2020046031144.hdf"
+#mac file
+file <- "//Volumes//GEOG331_F25//espina/Data for Class//final project data//MOD21A1N.A2000173.h08v05.061.2020046031144.hdf"
 
 #subsets
-data <- rast("Z:\\espina\\Data for Class\\final project data\\MOD21A1N.A2000173.h08v05.061.2020046031144.hdf")
+#desktop subset
+data <- rast(file)
 lst <- data[[1]]
 
 #phoenix shapefile
-phx <- vect("Z:\\espina\\Data for Class\\final project data\\City_Parcels\\City_Parcels.shp")
+#desktop
+#phx <- vect("Z:\\espina\\Data for Class\\final project data\\City_Parcels\\City_Parcels.shp")
+#mac version
+phx <- vect('//Volumes//GEOG331_F25//espina//Data for Class//final project data//City_Parcels//City_Parcels.shp')
 #project phoenix shapefile into the modis
 
-phxphx_modis <- project(phx, crs(lst)) 
+phx_modis <- project(phx, crs(lst)) 
+print(phx_modis)
 
 #extract phx from modis tile
 values_phx <- extract(lst, phx_modis)
-values_phx
+values_phx[2]
 
 
-#convert temperature to celsius -- supposedly just raw numbers
+#convert temperature to celsius - already in Kelvin with a scale of .02
 value_phx_k <- value_phx[[2]] * .02
 value_phx_k
 
