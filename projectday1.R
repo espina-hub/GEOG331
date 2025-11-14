@@ -8,9 +8,7 @@ library("terra")
 #mac file
 file <- "//Volumes//GEOG331_F25//espina/Data for Class//final project data//MOD21A1N.A2000173.h08v05.061.2020046031144.hdf"
 
-#subsets
-#desktop subset
-
+#subset to the LST file within
 data <- rast(file)
 lst <- data[[1]]
 
