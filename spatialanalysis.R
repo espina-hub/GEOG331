@@ -50,7 +50,7 @@ mad_dec <- dec[dec$COUNTY=="MADISON",]
 # we could also use the crop function
 # what dimensions of our raster layer are used to crop the vector layer
 # crop dec by lc
-      # lc_dec <- crop(dec,lc)
+       lc_dec <- crop(dec,lc)
 
 # lastly, create a buffer around the Madison County DEC lands
 # what are the units? 
@@ -71,3 +71,4 @@ mad_dec$ndvi_out <- zonal(ndvi, mad_buf, fun = "mean")
 
 # calculate the difference to see if DEC lands are more productive
 mad_dec$ndvi_dif <- mad_dec$ndvi_in-mad_dec$ndvi_out
+head(mad_dec)
