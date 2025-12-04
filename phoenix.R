@@ -4,9 +4,9 @@ library("terra")
 
 # Path to your MODIS HDF file -- file contains tile that phoenix is included in
 #desktop file
-#file <- "Z:\\espina\\Data for Class\\final project data\\MOD21A1N.A2000173.h08v05.061.2020046031144.hdf"
+file <- "Z:\\espina\\Data for Class\\final project data\\MOD21A1N.A2000173.h08v05.061.2020046031144.hdf"
 #mac file
-file <- "//Volumes//GEOG331_F25//espina/Data for Class//final project data//MOD21A1N.A2000173.h08v05.061.2020046031144.hdf"
+#file <- "//Volumes//GEOG331_F25//espina/Data for Class//final project data//MOD21A1N.A2000173.h08v05.061.2020046031144.hdf"
 
 #subset to the LST file within
 data <- rast(file)
@@ -15,9 +15,9 @@ lst <- data[[1]]
 summary(lst)
 #phoenix shapefile
 #desktop
-#phx <- vect("Z:\\espina\\Data for Class\\final project data\\City_Parcels\\City_Parcels.shp")
+phx <- vect("Z:\\espina\\Data for Class\\final project data\\kx-phoenix-city-boundary-SHP\\phoenix-city-boundary.shp")
 #mac version
-phx <- vect('//Volumes//GEOG331_F25//espina//Data for Class//final project data//kx-phoenix-city-boundary-SHP//phoenix-city-boundary.shp')
+#phx <- vect('//Volumes//GEOG331_F25//espina//Data for Class//final project data//kx-phoenix-city-boundary-SHP//phoenix-city-boundary.shp')
 
 #project phoenix shapefile into the modis
 phx_modis <- project(phx, crs(lst)) 
@@ -173,3 +173,15 @@ legend("topright",
        col = c("tomato", "steelblue"),
        lwd = 3,
        bty = "n")
+
+#t test time -- TRIPLE TTTTT
+
+#check normality first using a shapiro test
+urban_sample <- sample(lst_urban_c_clean, min(5000, length(lst_urban_c_clean)))
+suburb_sample <- sample(lst_suburb_c_clean, min(5000, length(lst_suburb_c_clean))) 
+shapiro.test(urban_sample)
+shapiro.test(suburb_sample)
+
+#t test
+t_test_result <- t.test(lst_urban_c_clean, lst_suburb_c_clean)
+t_test_result
