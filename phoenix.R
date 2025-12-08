@@ -1,8 +1,43 @@
-##Beginning Final Project!! Work day 1 (11/6) and 2 (11/13)
-
 library("terra")
 
-# Path to your MODIS HDF file -- file contains tile that phoenix is included in
+#setting up workflow! goal: for loop or lapply to iterate through locations and dates
+
+#begin with city shapefiles in a list
+city_shps <- list(
+    phoenix = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//vegas and phoenix//phoenix-city-boundary.shp',
+    vegas = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//vegas and phoenix//Vegas_City_Limits.shp',
+    orlando = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//orlando//orlando.shp',
+    houston = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//houston//houston-texas-city-limits.shp'
+)
+
+city_modis <- list(
+  phoenix = list(
+    '2000' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//vegas and phoenix//MOD21A1N.A2000173.h08v05.061.2020046031144.hdf',
+    '2024' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//vegas and phoenix//MOD21A1N.A2024173.h08v05.061.2024174075550.hdf'
+  ),
+  vegas = list(
+    '2000' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//vegas and phoenix//MOD21A1N.A2000173.h08v05.061.2020046031144.hdf',
+    '2024' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//vegas and phoenix//MOD21A1N.A2024173.h08v05.061.2024174075550.hdf'
+  ),
+  orlando = list(
+    '2000' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//orlando//MOD21A1N.A2000173.h10v06.061.2020046031443.hdf',
+    '2024' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//orlando//MOD21A1N.A2024173.h10v06.061.2024174075607.hdf'
+  ),
+  houston = list(
+    '2000' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//houston//MOD21A1N.A2000173.h09v06.061.2020046031416.hdf',
+    '2024' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//houston//MOD21A1N.A2024173.h09v06.061.2024174075414.hdf'
+  ))
+
+
+
+
+
+
+
+
+
+
+# Path to MODIS HDF file -- file contains tile that phoenix is included in
 #desktop file
 file <- "Z:\\espina\\Data for Class\\final project data\\MOD21A1N.A2000173.h08v05.061.2020046031144.hdf"
 #mac file
