@@ -1,13 +1,12 @@
 library("terra")
-
 #setting up workflow! goal: for loop or lapply to iterate through locations and dates
 
 #begin with city shapefiles in a list
 city_shps <- list(
-    phoenix = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//vegas and phoenix//phoenix-city-boundary.shp',
-    vegas = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//vegas and phoenix//Vegas_City_Limits.shp',
-    orlando = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//orlando//orlando.shp',
-    houston = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//houston//houston-texas-city-limits.shp'
+    phoenix = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//vegas and phoenix//kx-phoenix-city-boundary-SHP',
+    vegas = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//vegas and phoenix//Vegas City_Limits',
+    orlando = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//orlando//OrlandoCityLimits_20251204',
+    houston = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//houston/kx-houston-texas-city-limits-SHP'
 )
 
 city_modis <- list(
@@ -28,6 +27,43 @@ city_modis <- list(
     '2024' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//houston//MOD21A1N.A2024173.h09v06.061.2024174075414.hdf'
   ))
 
+
+# ORLANDO 2000 DIAGNOSTIC -- ASK LORANTY
+
+raster_path    <- city_modis$orlando[["2000"]]
+shapefile_path <- city_shps$orlando
+
+data  <- rast(raster_path)
+lst   <- data[[1]]
+city  <- vect(shapefile_path)
+
+city_modis <- project(city, crs(lst))
+
+lst_c <- lst - 273.15
+
+# no crop this time, just full tile
+buffer_dist_m    <- 15 * 1000
+city_buffer      <- buffer(city_modis, width = buffer_dist_m)
+city_buffer_ring <- erase(city_buffer, city_modis)
+
+urban_vals  <- extract(lst_c, city_modis)[[2]]
+suburb_vals <- extract(lst_c, city_buffer_ring)[[2]]
+
+cat("Raw lengths (before NA removal):\n")
+length(urban_vals)
+length(suburb_vals)
+
+cat("Non-NA counts:\n")
+sum(!is.na(urban_vals))
+sum(!is.na(suburb_vals))
+
+cat("Urban summary:\n")
+summary(urban_vals)
+
+cat("Suburb summary:\n")
+summary(suburb_vals)
+
+
 #now, set up function
 uhi_analysis <- function(raster_path, shapefile_path, buffer_km = 15){
  data <- rast(raster_path) #load raster (modis tile)
@@ -46,11 +82,11 @@ uhi_analysis <- function(raster_path, shapefile_path, buffer_km = 15){
  city_buffer_ring <- erase(city_buffer, city_modis)
  
  #extract values
- urban_vals <- extract(lst_crop_city_c, city_modis)[[2]]
- suburb_vals <- extract(lst_crop_city_c, city_buffer_ring)[[2]]
+ urban_vals <- extract(lst_c, city_modis)[[2]]
+ suburb_vals <- extract(lst_c, city_buffer_ring)[[2]]
 
  lst_urban_c_clean <- urban_vals[!is.na(urban_vals)]
- lst_suburb_c_clean <- suburb_vals[!is.na(lst_suburb_c_clean)]
+ lst_suburb_c_clean <- suburb_vals[!is.na(suburb_vals)]
  
  #stats time
  mean_urban <- mean(lst_urban_c_clean)
@@ -61,11 +97,13 @@ uhi_analysis <- function(raster_path, shapefile_path, buffer_km = 15){
  urban_sample <- sample(lst_urban_c_clean, min(5000, length(lst_urban_c_clean)))
  suburb_sample <- sample(lst_suburb_c_clean, min(5000, length(lst_suburb_c_clean)))
  
- shapiro_urban <- shapiro.test(urban_sample)
- shapiro_suburb <- shapiro.test(suburb_sample)
- 
  #t-test 
- t_test_result <- t.test(lst_urban_c_clean, lst_suburb_c_clean)
+ if (length(lst_urban_c_clean) < 2 || length(lst_suburb_c_clean) < 2) {
+   t_test_result <- NA
+ } else {
+   t_test_result <- t.test(lst_urban_c_clean, lst_suburb_c_clean)
+ }
+ 
  
  #return list of outputs
  return(list(
@@ -74,23 +112,20 @@ uhi_analysis <- function(raster_path, shapefile_path, buffer_km = 15){
    difference = difference,
    n_urban = length(lst_urban_c_clean),
    n_suburban = length(lst_suburb_c_clean),
-   shapiro_urban = shapiro_urban,
-   shapiro_suburb = shapiro_suburb,
    t_test = t_test_result
  ))
                         
  }
-  
-  
+ 
 results <- list()
 
-for (city in names(city_rasters))
+for (city in names(city_modis))
 {
   shapefile_path <- city_shps[[city]]
 results[[city]] <- list()
 
   for (yr in names(city_modis[[city]])) {
-    raster_path <- city_rasters[[city]][[yr]]
+    raster_path <- city_modis[[city]][[yr]]
     cat("Processing:", city, "-", yr, "\n")
     
     results[[city]][[yr]] <- uhi_analysis(
@@ -101,16 +136,28 @@ results[[city]] <- list()
   }
 }
 
+results
+test_phx_2000 <- uhi_analysis(
+  raster_path    = city_modis$phoenix[['2000']],
+  shapefile_path = city_shps$phoenix,
+  buffer_km      = 15
+)
+
+test_phx_2000$mean_urban
+test_phx_2000$mean_suburban
+test_phx_2000$difference
+test_phx_2000$t_test$p.value
 
 
 
 
+#all of my original code is here -- the t test values are diff from loop and from this for phx 
 
 # Path to MODIS HDF file -- file contains tile that phoenix is included in
 #desktop file
-file <- "Z:\\espina\\Data for Class\\final project data\\MOD21A1N.A2000173.h08v05.061.2020046031144.hdf"
+#file <- "Z:\\espina\\Data for Class\\final project data\\MOD21A1N.A2000173.h08v05.061.2020046031144.hdf"
 #mac file
-#file <- "//Volumes//GEOG331_F25//espina/Data for Class//final project data//MOD21A1N.A2000173.h08v05.061.2020046031144.hdf"
+file <- '/Volumes/GEOG331_F25/espina/Data for Class/final project data/vegas and phoenix/MOD21A1N.A2000173.h08v05.061.2020046031144.hdf'
 
 #subset to the LST file within
 data <- rast(file)
@@ -119,9 +166,9 @@ lst <- data[[1]]
 summary(lst)
 #phoenix shapefile
 #desktop
-phx <- vect("Z:\\espina\\Data for Class\\final project data\\kx-phoenix-city-boundary-SHP\\phoenix-city-boundary.shp")
+#phx <- vect("Z:\\espina\\Data for Class\\final project data\\kx-phoenix-city-boundary-SHP\\phoenix-city-boundary.shp")
 #mac version
-#phx <- vect('//Volumes//GEOG331_F25//espina//Data for Class//final project data//kx-phoenix-city-boundary-SHP//phoenix-city-boundary.shp')
+phx <- vect('/Volumes/GEOG331_F25/espina/Data for Class/final project data/vegas and phoenix/kx-phoenix-city-boundary-SHP')
 
 #project phoenix shapefile into the modis
 phx_modis <- project(phx, crs(lst)) 
