@@ -75,15 +75,31 @@ uhi_analysis <- function(raster_path, shapefile_path, buffer_km = 15){
    n_urban = length(lst_urban_c_clean),
    n_suburban = length(lst_suburb_c_clean),
    shapiro_urban = shapiro_urban,
-   shapiro_suburb = shaprio_suburb,
+   shapiro_suburb = shapiro_suburb,
    t_test = t_test_result
  ))
                         
  }
   
   
+results <- list()
 
+for (city in names(city_rasters))
+{
+  shapefile_path <- city_shps[[city]]
+results[[city]] <- list()
 
+  for (yr in names(city_modis[[city]])) {
+    raster_path <- city_rasters[[city]][[yr]]
+    cat("Processing:", city, "-", yr, "\n")
+    
+    results[[city]][[yr]] <- uhi_analysis(
+      raster_path = raster_path,
+      shapefile_path = shapefile_path,
+      buffer_km = 15
+    )
+  }
+}
 
 
 
@@ -181,7 +197,7 @@ legend("bottomleft",
 suburb_vals <- extract(lst_crop_phx_c, phx_buf_ring)
 lst_suburb_c <- suburb_vals[[2]]
 # clean NAs
-lst_suburb_c_clean <- lst_suburb_c[!is.na(lst_suburb_c)]
+lst_suburb_c_clean <- suburb_vals[!is.na(lst_suburb_c_clean)]
 
 summary(lst_suburb_c_clean)
 
