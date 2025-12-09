@@ -28,7 +28,60 @@ city_modis <- list(
     '2024' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//houston//MOD21A1N.A2024173.h09v06.061.2024174075414.hdf'
   ))
 
+#now, set up function
+uhi_analysis <- function(raster_path, shapefile_path, buffer_km = 15){
+ data <- rast(raster_path) #load raster (modis tile)
+ lst <- data[[1]] #subset to the correct band --> LST currently in K
+ city <- vect(shapefile_path) #load shapefile of city boundary
+ 
+ city_modis <- project(city, crs(lst)) #project shp to raster
+ 
+ lst_c <- lst - 273.15 #convert values to Celsius
+ 
+ lst_crop_city_c <- crop(lst_c, city_modis) #crop raster to city ext
+ 
+ #buffer and suburban ring
+ buffer_dist_m <- buffer_km * 1000 #km --> meters so it works in terra
+ city_buffer <- buffer(city_modis, width = buffer_dist_m)
+ city_buffer_ring <- erase(city_buffer, city_modis)
+ 
+ #extract values
+ urban_vals <- extract(lst_crop_city_c, city_modis)[[2]]
+ suburb_vals <- extract(lst_crop_city_c, city_buffer_ring)[[2]]
 
+ lst_urban_c_clean <- urban_vals[!is.na(urban_vals)]
+ lst_suburb_c_clean <- suburb_vals[!is.na(lst_suburb_c_clean)]
+ 
+ #stats time
+ mean_urban <- mean(lst_urban_c_clean)
+ mean_suburban <- mean(lst_suburb_c_clean)
+ difference <- mean_urban - mean_suburban
+ 
+ #normality checks
+ urban_sample <- sample(lst_urban_c_clean, min(5000, length(lst_urban_c_clean)))
+ suburb_sample <- sample(lst_suburb_c_clean, min(5000, length(lst_suburb_c_clean)))
+ 
+ shapiro_urban <- shapiro.test(urban_sample)
+ shapiro_suburb <- shapiro.test(suburb_sample)
+ 
+ #t-test 
+ t_test_result <- t.test(lst_urban_c_clean, lst_suburb_c_clean)
+ 
+ #return list of outputs
+ return(list(
+   mean_urban = mean_urban,
+   mean_suburban = mean_suburban,
+   difference = difference,
+   n_urban = length(lst_urban_c_clean),
+   n_suburban = length(lst_suburb_c_clean),
+   shapiro_urban = shapiro_urban,
+   shapiro_suburb = shaprio_suburb,
+   t_test = t_test_result
+ ))
+                        
+ }
+  
+  
 
 
 
