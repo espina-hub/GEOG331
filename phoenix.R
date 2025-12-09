@@ -28,7 +28,7 @@ city_modis <- list(
   ))
 
 
-# ORLANDO 2000 DIAGNOSTIC -- ASK LORANTY
+# ORLANDO 2000 -- ASK LORANTY
 
 raster_path    <- city_modis$orlando[["2000"]]
 shapefile_path <- city_shps$orlando
