@@ -9,6 +9,7 @@ city_shps <- list(
     houston = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//houston/kx-houston-texas-city-limits-SHP'
 )
 
+#add modis tiles in a list: first, list of cities, with a list of the tiles nested within 
 city_modis <- list(
   phoenix = list(
     '2000' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//vegas and phoenix//MOD21A1N.A2000173.h08v05.061.2020046031144.hdf',
@@ -62,6 +63,8 @@ summary(urban_vals)
 
 cat("Suburb summary:\n")
 summary(suburb_vals)
+
+#long story short: something weird is happening here
 
 
 #now, set up function
@@ -119,6 +122,7 @@ uhi_analysis <- function(raster_path, shapefile_path, buffer_km = 15){
  
 results <- list()
 
+#now run the functino
 for (city in names(city_modis))
 {
   shapefile_path <- city_shps[[city]]
@@ -143,6 +147,8 @@ test_phx_2000 <- uhi_analysis(
   buffer_km      = 15
 )
 
+#suggests that the code works but there are differences from my original version despite using
+#the same data and methods
 test_phx_2000$mean_urban
 test_phx_2000$mean_suburban
 test_phx_2000$difference
@@ -152,6 +158,11 @@ test_phx_2000$t_test$p.value
 
 
 #all of my original code is here -- the t test values are diff from loop and from this for phx 
+#keeping this for now as well so i can easily add plots and histograms and whatever else to
+#my function and for loops above --> right now they are just for phoenix in 2000
+
+#also, do i need to do a shapiro test? the volume of my data is LARGE so i feel like its not 
+#really necessary, especially because it will only work for some locations
 
 # Path to MODIS HDF file -- file contains tile that phoenix is included in
 #desktop file
