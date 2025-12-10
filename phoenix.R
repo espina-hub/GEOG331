@@ -28,8 +28,24 @@ city_modis <- list(
     '2024' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//houston//MOD21A1N.A2024173.h09v06.061.2024174075414.hdf'
   ))
 
+
+#troubleshooting phoenix
+#phx2000_path <- city_modis$phoenix$`2000`
+
+# 2. Load the raw MODIS file
+#phx2000_r <- rast(phx2000_path)
+
+# 3. Get the LST band (still in Kelvin)
+#phx2000_lst <- phx2000_r[[1]]
+
+# 4. Summary BEFORE any city cropping / buffers / anything
+#summary(phx2000_lst)  
+
+
+
+
 #now, set up function
-uhi_analysis <- function(raster_path, shapefile_path, buffer_km = 15){
+uhi_analysis <- function(raster_path, shapefile_path, buffer_km = 10){
  data <- rast(raster_path) #load raster (modis tile)
  lst <- data[[1]] #subset to the correct band --> LST currently in K
  city <- vect(shapefile_path) #load shapefile of city boundary
@@ -37,8 +53,6 @@ uhi_analysis <- function(raster_path, shapefile_path, buffer_km = 15){
  city_modis <- project(city, crs(lst)) #project shp to raster
  
  lst_c <- lst - 273.15 #convert values to Celsius
- 
- lst_crop_city_c <- crop(lst_c, city_modis) #crop raster to city ext
  
  #buffer and suburban ring
  buffer_dist_m <- buffer_km * 1000 #km --> meters so it works in terra
@@ -71,13 +85,42 @@ uhi_analysis <- function(raster_path, shapefile_path, buffer_km = 15){
  
  #return list of outputs
  return(list(
-   mean_urban = mean_urban,
-   mean_suburban = mean_suburban,
-   difference = difference,
-   n_urban = length(lst_urban_c_clean),
-   n_suburban = length(lst_suburb_c_clean),
-   t_test = t_test_result
+   # summary vectors
+   summary_urban    = summary(lst_urban_c_clean),
+   summary_suburban = summary(lst_suburb_c_clean),
+   
+   # stats
+   mean_urban       = mean_urban,
+   mean_suburban    = mean_suburban,
+   difference       = difference,
+   sd_urban         = sd(lst_urban_c_clean),
+   sd_suburban      = sd(lst_suburb_c_clean),
+   
+   # counts
+   n_urban          = length(lst_urban_c_clean),
+   n_suburban       = length(lst_suburb_c_clean),
+  
+   #vectors for plotting 
+   urban_values     = lst_urban_c_clean,
+   suburb_values    = lst_suburb_c_clean,
+   city_boundary    = city_modis,         # For the map overlay
+   suburb_ring      = city_buffer_ring,    # For the map overlay
+   
+   # inferential test
+   t_test           = t_test_result
  ))
+   
+   
+   
+   
+   
+  #  mean_urban = mean_urban,
+   #mean_suburban = mean_suburban,
+   #difference = difference,
+   #n_urban = length(lst_urban_c_clean),
+   #n_suburban = length(lst_suburb_c_clean),
+   #t_test = t_test_result
+ #))
                         
  }
  
@@ -87,37 +130,28 @@ results <- list()
 for (city in names(city_modis))
 {
   shapefile_path <- city_shps[[city]]
-results[[city]] <- list()
+  results[[city]] <- list()
 
   for (yr in names(city_modis[[city]])) {
     raster_path <- city_modis[[city]][[yr]]
-    cat("Processing:", city, "-", yr, "\n")
+    cat("Processing:", city, "-", yr, "\n") #lets me track where the code is at
     
     results[[city]][[yr]] <- uhi_analysis(
       raster_path = raster_path,
       shapefile_path = shapefile_path,
-      buffer_km = 15
+      buffer_km = 10
     )
   }
 }
 
 results
-test_phx_2000 <- uhi_analysis(
-  raster_path    = city_modis$phoenix[['2000']],
-  shapefile_path = city_shps$phoenix,
-  buffer_km      = 15
-)
 
 
-
-
+################################################################################
 
 #all of my original code is here -- the t test values are diff from loop and from this for phx 
 #keeping this for now as well so i can easily add plots and histograms and whatever else to
 #my function and for loops above --> right now they are just for phoenix in 2000
-
-#also, do i need to do a shapiro test? the volume of my data is LARGE so i feel like its not 
-#really necessary, especially because it will only work for some locations
 
 # Path to MODIS HDF file -- file contains tile that phoenix is included in
 #desktop file
@@ -129,7 +163,7 @@ file <- '/Volumes/GEOG331_F25/espina/Data for Class/final project data/vegas and
 data <- rast(file)
 lst <- data[[1]]
 
-summary(lst)
+summary(lst) #matches above from fn
 #phoenix shapefile
 #desktop
 #phx <- vect("Z:\\espina\\Data for Class\\final project data\\kx-phoenix-city-boundary-SHP\\phoenix-city-boundary.shp")
@@ -181,7 +215,7 @@ hist(lst_c_phx_clean,
 #to allow for comparison b/w values
 
 #set buffer distance 
-phx_buf_dist <- 15000  # 15 km suburban buffer
+phx_buf_dist <- 10000  # 10 km suburban buffer
 #make buffer
 phx_buf <- buffer(phx_modis, width = phx_buf_dist)
 #buffer ring --> remove city from it
@@ -215,9 +249,11 @@ legend("bottomleft",
 suburb_vals <- extract(lst_crop_phx_c, phx_buf_ring)
 lst_suburb_c <- suburb_vals[[2]]
 # clean NAs
-lst_suburb_c_clean <- suburb_vals[!is.na(lst_suburb_c_clean)]
+lst_suburb_c_clean <- lst_suburb_c[!is.na(lst_suburb_c)]
 
 summary(lst_suburb_c_clean)
+length(lst_suburb_c_clean)
+length(lst_urban_c_clean)
 
 #extract phoenix
 urban_vals <- extract(lst_crop_phx_c, phx_modis)
@@ -234,11 +270,23 @@ mean_urban <- mean(lst_urban_c_clean)
 mean_suburban <- mean(lst_suburb_c_clean)
 difference <- mean_urban - mean_suburban
 
+mean_urban
+mean_suburban
+
 #begin plotting
 par(mfrow = c(1, 2))
 
 all_vals <- c(lst_urban_c_clean, lst_suburb_c_clean)
 common_breaks <- pretty(range(all_vals, na.rm = TRUE), n = 40)
+
+#extra code im throwing here because im confused
+# snippet version
+length(lst_suburb_c_clean)
+
+# function version
+results$phoenix$`2000`$n_suburban_clean
+
+
 
 #build hist objects to get density + ylim
 urban_hist  <- hist(lst_urban_c_clean,
