@@ -28,6 +28,16 @@ city_modis <- list(
     '2024' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//houston//MOD21A1N.A2024173.h09v06.061.2024174075414.hdf'
   ))
 
+#plot orlando modis tile -- definitely going to be changed
+orlando <- rast('//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//orlando//MOD21A1N.A2000173.h10v06.061.2020046031443.hdf')
+orlando_2024 <- rast('//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//orlando//MOD21A1N.A2024173.h10v06.061.2024174075607.hdf')
+
+#checking other modis tiles super fast
+plot(rast('//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//houston//MOD21A1N.A2000173.h09v06.061.2020046031416.hdf'))
+
+
+#just shift orlando by days
+#also get values
 
 # ORLANDO 2000 -- ASK LORANTY
 
@@ -185,6 +195,11 @@ phx <- vect('/Volumes/GEOG331_F25/espina/Data for Class/final project data/vegas
 phx_modis <- project(phx, crs(lst)) 
 #confirm re projection worked and now matches the modis tile
 crs(phx_modis)
+
+plot(lst)
+plot(phx, add = TRUE)
+
+
 #extract phx from modis tile
 values_phx <- extract(lst, phx_modis)
 #subset to get the value column, not the ID column
