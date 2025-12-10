@@ -109,19 +109,6 @@ uhi_analysis <- function(raster_path, shapefile_path, buffer_km = 10){
    # inferential test
    t_test           = t_test_result
  ))
-   
-   
-   
-   
-   
-  #  mean_urban = mean_urban,
-   #mean_suburban = mean_suburban,
-   #difference = difference,
-   #n_urban = length(lst_urban_c_clean),
-   #n_suburban = length(lst_suburb_c_clean),
-   #t_test = t_test_result
- #))
-                        
  }
  
 results <- list()
