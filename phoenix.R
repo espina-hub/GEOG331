@@ -140,7 +140,7 @@ plot_uhi_results <- function(city_name, year, res)
   legend("bottomleft",
          legend = c("Urban Core", "Suburban Ring"),
          lwd = 2,
-         col = c("red", "blue"), bty = n)
+         col = c("red", "blue"), bty = "n")
   
   #histograms and plots
   all_vals <- c(res$urban_values, res$suburb_values)
@@ -162,12 +162,38 @@ plot_uhi_results <- function(city_name, year, res)
        main = "Urban LST Distribution (C)",
        xlab = "Temperature (C)")
   #suburb histogram
-  hist(res$)
+  hist(res$suburb_values,
+       breaks = common_breaks, freq = FALSE,
+       ylim = c(0, max_y_hist),
+       col = "steelblue",
+       main = "Suburban LST Distribution (C)",
+       xlab = "Temperature (C)")
   
-  
-  
-  
-  
+  #density plot
+  plot(dens_urban,
+       col = "tomato", lwd = 3,
+       ylim = c(0, max_y_dens),
+       main = "Urban vs Suburban Density Comparison",
+       xlab = "Temperature (C)", ylab = "Density")
+  lines(dens_suburb, col = "steelblue", lwd = 3)
+  legend("topright",
+         legend = c("Urban", "Suburban"),
+         col = c("tomato", "steelblue"),
+         lwd = 3, bty = "n")
+  par(mfrow = c(1,1), mar = c(5, 4, 4, 2) + 0.1, oma = c(0,0,0,0))
+}
+
+#next loop for plotting
+for (city in names(results)) {
+  for (yr in names(results[[city]])){
+    cat("Generating plots for:", city, "-", yr, "\n")
+    
+  plot_uhi_results(
+    city_name = city,
+    year = yr,
+    res = results[[city]][[yr]]
+  )
+  }
 }
 
 
