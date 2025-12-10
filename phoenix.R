@@ -20,62 +20,13 @@ city_modis <- list(
     '2024' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//vegas and phoenix//MOD21A1N.A2024173.h08v05.061.2024174075550.hdf'
   ),
   orlando = list(
-    '2000' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//orlando//MOD21A1N.A2000173.h10v06.061.2020046031443.hdf',
-    '2024' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//orlando//MOD21A1N.A2024173.h10v06.061.2024174075607.hdf'
+    '2000' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//orlando//MOD21A1N.A2000162.h10v06.061.2020045221848.hdf', #june 10
+    '2024' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//orlando//MOD21A1N.A2024178.h10v06.061.2024180010435.hdf'#june 26
   ),
   houston = list(
     '2000' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//houston//MOD21A1N.A2000173.h09v06.061.2020046031416.hdf',
     '2024' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//houston//MOD21A1N.A2024173.h09v06.061.2024174075414.hdf'
   ))
-
-#plot orlando modis tile -- definitely going to be changed
-orlando <- rast('//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//orlando//MOD21A1N.A2000173.h10v06.061.2020046031443.hdf')
-orlando_2024 <- rast('//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//orlando//MOD21A1N.A2024173.h10v06.061.2024174075607.hdf')
-
-#checking other modis tiles super fast
-plot(rast('//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//houston//MOD21A1N.A2000173.h09v06.061.2020046031416.hdf'))
-
-
-#just shift orlando by days
-#also get values
-
-# ORLANDO 2000 -- ASK LORANTY
-
-raster_path    <- city_modis$orlando[["2000"]]
-shapefile_path <- city_shps$orlando
-
-data  <- rast(raster_path)
-lst   <- data[[1]]
-city  <- vect(shapefile_path)
-
-city_modis <- project(city, crs(lst))
-
-lst_c <- lst - 273.15
-
-# no crop this time, just full tile
-buffer_dist_m    <- 15 * 1000
-city_buffer      <- buffer(city_modis, width = buffer_dist_m)
-city_buffer_ring <- erase(city_buffer, city_modis)
-
-urban_vals  <- extract(lst_c, city_modis)[[2]]
-suburb_vals <- extract(lst_c, city_buffer_ring)[[2]]
-
-cat("Raw lengths (before NA removal):\n")
-length(urban_vals)
-length(suburb_vals)
-
-cat("Non-NA counts:\n")
-sum(!is.na(urban_vals))
-sum(!is.na(suburb_vals))
-
-cat("Urban summary:\n")
-summary(urban_vals)
-
-cat("Suburb summary:\n")
-summary(suburb_vals)
-
-#long story short: something weird is happening here
-
 
 #now, set up function
 uhi_analysis <- function(raster_path, shapefile_path, buffer_km = 15){
@@ -132,7 +83,7 @@ uhi_analysis <- function(raster_path, shapefile_path, buffer_km = 15){
  
 results <- list()
 
-#now run the functino
+#now run the function
 for (city in names(city_modis))
 {
   shapefile_path <- city_shps[[city]]
@@ -157,12 +108,6 @@ test_phx_2000 <- uhi_analysis(
   buffer_km      = 15
 )
 
-#suggests that the code works but there are differences from my original version despite using
-#the same data and methods
-test_phx_2000$mean_urban
-test_phx_2000$mean_suburban
-test_phx_2000$difference
-test_phx_2000$t_test$p.value
 
 
 
