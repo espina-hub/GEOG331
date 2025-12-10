@@ -29,21 +29,6 @@ city_modis <- list(
   ))
 
 
-#troubleshooting phoenix
-#phx2000_path <- city_modis$phoenix$`2000`
-
-# 2. Load the raw MODIS file
-#phx2000_r <- rast(phx2000_path)
-
-# 3. Get the LST band (still in Kelvin)
-#phx2000_lst <- phx2000_r[[1]]
-
-# 4. Summary BEFORE any city cropping / buffers / anything
-#summary(phx2000_lst)  
-
-
-
-
 #now, set up function
 uhi_analysis <- function(raster_path, shapefile_path, buffer_km = 10){
  data <- rast(raster_path) #load raster (modis tile)
@@ -131,7 +116,61 @@ for (city in names(city_modis))
   }
 }
 
-results
+#results
+
+plot_uhi_results <- function(city_name, year, res)
+  {
+  par(mfrow = c(2,2), mar = c(4, 4, 2, 1) + .1, oma = c(0, 0, 3, 0)) #set margins (in and out)
+  
+  #title for grid
+  main_title <- paste("UHI Analysis for", city_name, year)
+  mtext(main_title, outer = TRUE, cex = 1.5, font = 2)
+  
+  #spatial map
+  plot(res$suburb_ring, #plot suburban ring
+       main = "Urban/Suburban Zones (10km Buffer)",
+       border = "blue",
+       col = "lightskyblue", #this colors the suburban area
+       lwd = 1)
+  plot(res$city_boundary, 
+       add = TRUE,
+       border = "red",
+       col = "tomato", #colors urban area
+       lwd = 2)
+  legend("bottomleft",
+         legend = c("Urban Core", "Suburban Ring"),
+         lwd = 2,
+         col = c("red", "blue"), bty = n)
+  
+  #histograms and plots
+  all_vals <- c(res$urban_values, res$suburb_values)
+  common_breaks <- pretty(range(all_vals, na.rm = TRUE), n = 40)
+  
+  dens_urban <- density(res$urban_values, na.rm = TRUE)
+  dens_suburb <- density(res$suburb_values, na.rm = TRUE)
+  
+  #calculate y limits
+  max_y_hist <- max(hist(res$urban_values, breaks = common_breaks, plot = FALSE)$density,
+                    hist(res$suburb_values, breaks = common_breaks, plot = FALSE)$density) * 1.1 #google says good
+  max_y_dens <- max(dens_urban$y, dens_suburb$y) * 1.1 #use 1.1 to make look pretty
+  
+  #urban histogram
+  hist(res$urban_values,
+       breaks = common_breaks, freq = FALSE, 
+       ylim = c(0, max_y_hist),
+       col = "tomato",
+       main = "Urban LST Distribution (C)",
+       xlab = "Temperature (C)")
+  #suburb histogram
+  hist(res$)
+  
+  
+  
+  
+  
+}
+
+
 
 
 ################################################################################
