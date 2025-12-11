@@ -36,16 +36,18 @@ uhi_analysis <- function(raster_path, shapefile_path, buffer_km = 10){
  city <- vect(shapefile_path) #load shapefile of city boundary
  
  city_modis <- project(city, crs(lst)) #project shp to raster
+ city_unified <- aggregate(city_modis) #merge to one polygon?
  
  lst_c <- lst - 273.15 #convert values to Celsius
  
+ lst_crop_city_c <- crop(lst_c, city_unified)
  #buffer and suburban ring
  buffer_dist_m <- buffer_km * 1000 #km --> meters so it works in terra
- city_buffer <- buffer(city_modis, width = buffer_dist_m)
- city_buffer_ring <- erase(city_buffer, city_modis)
+ city_buffer <- buffer(city_unified, width = buffer_dist_m)
+ city_buffer_ring <- erase(city_buffer, city_unified)
  
  #extract values
- urban_vals <- extract(lst_c, city_modis)[[2]]
+ urban_vals <- extract(lst_c, city_unified)[[2]]
  suburb_vals <- extract(lst_c, city_buffer_ring)[[2]]
 
  lst_urban_c_clean <- urban_vals[!is.na(urban_vals)]
@@ -88,10 +90,10 @@ uhi_analysis <- function(raster_path, shapefile_path, buffer_km = 10){
    #vectors for plotting 
    urban_values     = lst_urban_c_clean,
    suburb_values    = lst_suburb_c_clean,
-   city_boundary    = city_modis,         # For the map overlay
+   city_boundary    = city_unified,         # For the map overlay
    suburb_ring      = city_buffer_ring,    # For the map overlay
    
-   # inferential test
+   #t_test
    t_test           = t_test_result
  ))
  }
@@ -100,8 +102,7 @@ results <- list()
 
 #now run the function
 for (city in names(city_modis))
-{
-  shapefile_path <- city_shps[[city]]
+{shapefile_path <- city_shps[[city]]
   results[[city]] <- list()
 
   for (yr in names(city_modis[[city]])) {
@@ -116,31 +117,43 @@ for (city in names(city_modis))
   }
 }
 
-#results
+results
 
-plot_uhi_results <- function(city_name, year, res)
+plot_uhi_results <- function(city_name, year, res, raster_path)
   {
-  par(mfrow = c(2,2), mar = c(4, 4, 2, 1) + .1, oma = c(0, 0, 3, 0)) #set margins (in and out)
-  
-  #title for grid
-  main_title <- paste("UHI Analysis for", city_name, year)
-  mtext(main_title, outer = TRUE, cex = 1.5, font = 2)
+  par(mfrow = c(1,3), mar = c(4, 4, 2, 1) + .1, oma = c(0, 0, 0, 0)) #set margins (in and out)
   
   #spatial map
-  plot(res$suburb_ring, #plot suburban ring
-       main = "Urban/Suburban Zones (10km Buffer)",
-       border = "blue",
-       col = "lightskyblue", #this colors the suburban area
-       lwd = 1)
-  plot(res$city_boundary, 
-       add = TRUE,
-       border = "red",
-       col = "tomato", #colors urban area
-       lwd = 2)
-  legend("bottomleft",
-         legend = c("Urban Core", "Suburban Ring"),
-         lwd = 2,
-         col = c("red", "blue"), bty = "n")
+  #data <- terra::rast(raster_path)
+  #lst_c <- data[[1]] - 273.15
+  
+  #plot(lst_c, #raster first
+      # main = "Urban Heat Island Context",
+       #cex.main = 1,
+       #col = hcl.colors(n = 25, palette = "Heat"),
+       #mar = c(3, 3, 2, 6))
+  
+  #title for grid
+#  main_title <- paste("UHI Analysis for", city_name, year)
+#  mtext(main_title, outer = TRUE, cex = 1.5, font = 2)
+  
+#  plot(res$suburb_ring,
+ #      add = TRUE, 
+  #     border = "blue",
+ #      col = NA,
+  #     lwd = 2)
+  
+ # plot(res$city_boundary, #urban core
+    #   add = TRUE,
+   #    border = "red",
+  #      col = NA,
+   #    lwd = 3)
+
+  #legend("bottomleft",
+    #     legend = c("Urban Core", "Suburban Ring"),
+     #    lwd = c(3, 2),
+      #   col = c("red", "blue"), 
+       #  bty = "n")
   
   #histograms and plots
   all_vals <- c(res$urban_values, res$suburb_values)
@@ -185,13 +198,17 @@ plot_uhi_results <- function(city_name, year, res)
 
 #next loop for plotting
 for (city in names(results)) {
-  for (yr in names(results[[city]])){
+  
+  for (yr in names(results[[city]])) {
     cat("Generating plots for:", city, "-", yr, "\n")
     
-  plot_uhi_results(
-    city_name = city,
-    year = yr,
-    res = results[[city]][[yr]]
+    #current_raster_path <- city_modis[[city]][[yr]]  
+ 
+    plot_uhi_results(
+      city_name = city,
+      year = yr,
+      res = results[[city]][[yr]],
+      #raster_path = current_raster_path
   )
   }
 }
@@ -331,15 +348,6 @@ par(mfrow = c(1, 2))
 all_vals <- c(lst_urban_c_clean, lst_suburb_c_clean)
 common_breaks <- pretty(range(all_vals, na.rm = TRUE), n = 40)
 
-#extra code im throwing here because im confused
-# snippet version
-length(lst_suburb_c_clean)
-
-# function version
-results$phoenix$`2000`$n_suburban_clean
-
-
-
 #build hist objects to get density + ylim
 urban_hist  <- hist(lst_urban_c_clean,
                     breaks = common_breaks,
@@ -395,15 +403,3 @@ legend("topright",
        col = c("tomato", "steelblue"),
        lwd = 3,
        bty = "n")
-
-#t test time -- TRIPLE TTTTT
-
-#check normality first using a shapiro test
-urban_sample <- sample(lst_urban_c_clean, min(5000, length(lst_urban_c_clean)))
-suburb_sample <- sample(lst_suburb_c_clean, min(5000, length(lst_suburb_c_clean))) 
-shapiro.test(urban_sample)
-shapiro.test(suburb_sample)
-
-#t test
-t_test_result <- t.test(lst_urban_c_clean, lst_suburb_c_clean)
-t_test_result
