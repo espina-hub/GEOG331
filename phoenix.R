@@ -3,16 +3,16 @@ library("terra")
 
 #begin with city shapefiles in a list
 city_shps <- list(
-    phoenix = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//vegas and phoenix//kx-phoenix-city-boundary-SHP',
-    vegas = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//vegas and phoenix//Vegas City_Limits',
-    orlando = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//orlando//OrlandoCityLimits_20251204',
-    houston = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//houston/kx-houston-texas-city-limits-SHP'
+  phoenix = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//vegas and phoenix//kx-phoenix-city-boundary-SHP',
+  vegas = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//vegas and phoenix//Vegas City_Limits',
+  orlando = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//orlando//OrlandoCityLimits_20251204',
+  houston = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//houston/kx-houston-texas-city-limits-SHP'
 )
 
 #add modis tiles in a list: first, list of cities, with a list of the tiles nested within 
 city_modis <- list(
   phoenix = list(
-    '2000' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//vegas and phoenix//MOD21A1N.A2000173.h08v05.061.2020046031144.hdf',
+    '2000' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//vegas and phoenix//MOD21A1N.A2000177.h08v05.061.2020047214800.hdf',
     '2024' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//vegas and phoenix//MOD21A1N.A2024173.h08v05.061.2024174075550.hdf'
   ),
   vegas = list(
@@ -31,96 +31,154 @@ city_modis <- list(
 
 #now, set up function
 uhi_analysis <- function(raster_path, shapefile_path, buffer_km = 10){
- data <- rast(raster_path) #load raster (modis tile)
- lst <- data[[1]] #subset to the correct band --> LST currently in K
- city <- vect(shapefile_path) #load shapefile of city boundary
- 
- city_modis <- project(city, crs(lst)) #project shp to raster
- city_unified <- aggregate(city_modis) #merge to one polygon?
- 
- lst_c <- lst - 273.15 #convert values to Celsius
- 
- lst_crop_city_c <- crop(lst_c, city_unified)
- #buffer and suburban ring
- buffer_dist_m <- buffer_km * 1000 #km --> meters so it works in terra
- city_buffer <- buffer(city_unified, width = buffer_dist_m)
- city_buffer_ring <- erase(city_buffer, city_unified)
- 
- #extract values
- urban_vals <- extract(lst_c, city_unified)[[2]]
- suburb_vals <- extract(lst_c, city_buffer_ring)[[2]]
-
- lst_urban_c_clean <- urban_vals[!is.na(urban_vals)]
- lst_suburb_c_clean <- suburb_vals[!is.na(suburb_vals)]
- 
- #stats time
- mean_urban <- mean(lst_urban_c_clean)
- mean_suburban <- mean(lst_suburb_c_clean)
- difference <- mean_urban - mean_suburban
- 
- #normality checks
- urban_sample <- sample(lst_urban_c_clean, min(5000, length(lst_urban_c_clean)))
- suburb_sample <- sample(lst_suburb_c_clean, min(5000, length(lst_suburb_c_clean)))
- 
- #t-test 
- if (length(lst_urban_c_clean) < 2 || length(lst_suburb_c_clean) < 2) {
-   t_test_result <- NA
- } else {
-   t_test_result <- t.test(lst_urban_c_clean, lst_suburb_c_clean)
- }
- 
- 
- #return list of outputs
- return(list(
-   # summary vectors
-   summary_urban    = summary(lst_urban_c_clean),
-   summary_suburban = summary(lst_suburb_c_clean),
-   
-   # stats
-   mean_urban       = mean_urban,
-   mean_suburban    = mean_suburban,
-   difference       = difference,
-   sd_urban         = sd(lst_urban_c_clean),
-   sd_suburban      = sd(lst_suburb_c_clean),
-   
-   # counts
-   n_urban          = length(lst_urban_c_clean),
-   n_suburban       = length(lst_suburb_c_clean),
+  data <- rast(raster_path) #load raster (modis tile)
+  lst <- data[[1]] #subset to the correct band --> LST currently in K
+  city <- vect(shapefile_path) #load shapefile of city boundary
   
-   #vectors for plotting 
-   urban_values     = lst_urban_c_clean,
-   suburb_values    = lst_suburb_c_clean,
-   city_boundary    = city_unified,         # For the map overlay
-   suburb_ring      = city_buffer_ring,    # For the map overlay
-   
-   #t_test
-   t_test           = t_test_result
- ))
- }
- 
-results <- list()
+  city_modis <- project(city, crs(lst)) #project shp to raster (sinusoidal)
+  city_unified <- aggregate(city_modis) #merge to one polygon
+  
+  lst_c <- lst - 273.15 #convert values to Celsius
+  
+  lst_crop_city_c <- crop(lst_c, city_unified)
+  #buffer and suburban ring
+  buffer_dist_m <- buffer_km * 1000 #km --> meters so it works in terra
+  city_buffer <- buffer(city_unified, width = buffer_dist_m)
+  city_buffer_ring <- erase(city_buffer, city_unified)
+  
+  #extract values
+  urban_vals <- extract(lst_c, city_unified)[[2]]
+  suburb_vals <- extract(lst_c, city_buffer_ring)[[2]]
+  
+  lst_urban_c_clean <- urban_vals[!is.na(urban_vals)]
+  lst_suburb_c_clean <- suburb_vals[!is.na(suburb_vals)]
+  
+  #stats time
+  num_urban <- length(lst_urban_c_clean)
+  num_suburb <- length(lst_suburb_c_clean)
+  
+  mean_urban <- mean(lst_urban_c_clean)
+  mean_suburb <- mean(lst_suburb_c_clean)
+  difference <- mean_urban - mean_suburban #uhi intensity
+  
+  median_urban <- median(lst_urban_c_clean)
+  median_suburb <- median(lst_suburb_c_clean)
+  median_diff <- median_urban - median_suburban
+  
+  sd_urban <- sd(lst_urban_c_clean)
+  sd_suburb <- sd(lst_suburb_c_clean)
+  
+  #Cohen's D (effect size) + T test
+  cohens_d <- NA
+  t_test_result <- NA
+  shapiro_urban <- NA
+  shapiro_suburb <- NA
+  
+  #cohens d
+  if (num_urban > 1 && num_suburb > 1) {
+    s_pooled <- sqrt(
+      ((num_urban-1)* sd_urban^2 + (num_suburb - 1)* sd_suburb^2) /
+        (num_urban + num_suburb -2))
+    cohens_d <- (mean_urban - mean_suburb) / s_pooled
+    
+    #t test
+    t_test_result <- t.test(lst_urban_c_clean, lst_suburb_c_clean)
+    
+    #check normality (shapiro wilk)
+    urban_sample <- sample(lst_urban_c_clean, min(5000, num_urban))
+    suburb_sample <- sample(lst_suburb_c_clean, min(5000, num_suburb))
+    
+    if (length(urban_sample) >= 3) {
+      shapiro_urban <- shapiro.test(urban_sample)
+    }
+    if (length(suburb_sample) >= 3) {
+      shapiro_suburb <- shapiro.test(suburb_sample)
+    }
+  }
+  
+  
+  #return list of outputs
+  return(list(
+    # summary vectors
+    summary_urban = summary(lst_urban_c_clean),
+    summary_suburb = summary(lst_suburb_c_clean),
+    
+    # stats
+    mean_urban = mean_urban,
+    mean_suburb = mean_suburb,
+    difference = difference,
+    median_urban = median_urban,
+    median_suburb = median_suburb, 
+    median_diff = median_diff,
+    sd_urban = sd_urban,
+    sd_suburb = sd_suburb,
+    cohens_d = cohens_d,
+    
+    # counts
+    n_urban = num_urban,
+    n_suburb = num_suburb,
+    
+    #vectors for plotting 
+    urban_values = lst_urban_c_clean,
+    suburb_values = lst_suburb_c_clean,
+    city_boundary = city_unified,         # For the map overlay
+    suburb_ring = city_buffer_ring,    # For the map overlay
+    
+    #t_test + distribution test
+    t_test = t_test_result,
+    shapiro_urban = shapiro_urban,
+    shapiro_suburb = shapiro_suburb
+  ))
+}
+
+stats_df <- data.frame()
+plot_data <- list()
+
 
 #now run the function
-for (city in names(city_modis))
-{shapefile_path <- city_shps[[city]]
-  results[[city]] <- list()
-
+for (city in names(city_modis)){
+  shapefile_path <- city_shps[[city]]
+  
+  plot_data[[city]] <- list() #initialize for city in plot_data
+  
   for (yr in names(city_modis[[city]])) {
     raster_path <- city_modis[[city]][[yr]]
     cat("Processing:", city, "-", yr, "\n") #lets me track where the code is at
     
-    results[[city]][[yr]] <- uhi_analysis(
+    res <- uhi_analysis(
       raster_path = raster_path,
       shapefile_path = shapefile_path,
       buffer_km = 10
     )
+    
+    new_row <- data.frame(
+      City = city,
+      Year = yr,
+      Mean_Diff_C = res$difference,
+      Median_Diff_C = res$median_diff,
+      Cohens_D = res$cohens_d,
+      Urban_Mean = res$mean_urban,
+      Suburb_Mean = res$mean_suburb,
+      Urban_N = res$n_urban,
+      Suburban_N = res$n_suburb,
+      P_value = if(is.list(res$t_test)) res$t_test$p.value else NA
+    )
+    
+    #append to stats dataframe
+    stats_df <- rbind(stats_df, new_row)
+    
+    #extract vectors for plotting list
+    plot_data[[city]][[yr]] <- list(
+      urban_values = res$urban_values,
+      suburb_values = res$suburb_values
+    )
   }
 }
 
-results
+
 
 plot_uhi_results <- function(city_name, year, res, raster_path)
-  {
+{
   par(mfrow = c(1,3), mar = c(4, 4, 2, 1) + .1, oma = c(0, 0, 0, 0)) #set margins (in and out)
   
   #spatial map
@@ -128,32 +186,32 @@ plot_uhi_results <- function(city_name, year, res, raster_path)
   #lst_c <- data[[1]] - 273.15
   
   #plot(lst_c, #raster first
-      # main = "Urban Heat Island Context",
-       #cex.main = 1,
-       #col = hcl.colors(n = 25, palette = "Heat"),
-       #mar = c(3, 3, 2, 6))
+  # main = "Urban Heat Island Context",
+  #cex.main = 1,
+  #col = hcl.colors(n = 25, palette = "Heat"),
+  #mar = c(3, 3, 2, 6))
   
   #title for grid
-#  main_title <- paste("UHI Analysis for", city_name, year)
-#  mtext(main_title, outer = TRUE, cex = 1.5, font = 2)
+  #  main_title <- paste("UHI Analysis for", city_name, year)
+  #  mtext(main_title, outer = TRUE, cex = 1.5, font = 2)
   
-#  plot(res$suburb_ring,
- #      add = TRUE, 
+  #  plot(res$suburb_ring,
+  #      add = TRUE, 
   #     border = "blue",
- #      col = NA,
+  #      col = NA,
   #     lwd = 2)
   
- # plot(res$city_boundary, #urban core
-    #   add = TRUE,
-   #    border = "red",
+  # plot(res$city_boundary, #urban core
+  #   add = TRUE,
+  #    border = "red",
   #      col = NA,
-   #    lwd = 3)
-
+  #    lwd = 3)
+  
   #legend("bottomleft",
-    #     legend = c("Urban Core", "Suburban Ring"),
-     #    lwd = c(3, 2),
-      #   col = c("red", "blue"), 
-       #  bty = "n")
+  #     legend = c("Urban Core", "Suburban Ring"),
+  #    lwd = c(3, 2),
+  #   col = c("red", "blue"), 
+  #  bty = "n")
   
   #histograms and plots
   all_vals <- c(res$urban_values, res$suburb_values)
@@ -203,13 +261,13 @@ for (city in names(results)) {
     cat("Generating plots for:", city, "-", yr, "\n")
     
     #current_raster_path <- city_modis[[city]][[yr]]  
- 
+    
     plot_uhi_results(
       city_name = city,
       year = yr,
       res = results[[city]][[yr]],
       #raster_path = current_raster_path
-  )
+    )
   }
 }
 
@@ -336,7 +394,7 @@ lst_suburb_c_clean <- lst_suburb_c_clean[!is.na(lst_suburb_c_clean)]
 
 #compare
 mean_urban <- mean(lst_urban_c_clean)
-mean_suburban <- mean(lst_suburb_c_clean)
+mean_suburb <- mean(lst_suburb_c_clean)
 difference <- mean_urban - mean_suburban
 
 mean_urban
