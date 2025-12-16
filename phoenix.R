@@ -1,5 +1,4 @@
 library("terra")
-library("tidyr")
 #setting up workflow! goal: for loop or lapply to iterate through locations and dates
 
 #begin with city shapefiles in a list
@@ -25,8 +24,8 @@ city_modis <- list(
     '2024' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//orlando//MOD21A1N.A2024178.h10v06.061.2024180010435.hdf'#june 26
   ),
   houston = list(
-    '2000' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//houston//MOD21A1N.A2000173.h09v06.061.2020046031416.hdf',
-    '2024' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//houston//MOD21A1N.A2024173.h09v06.061.2024174075414.hdf'
+    '2000' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//houston//MOD21A1N.A2000174.h09v06.061.2020046033705.hdf', #june 22
+    '2024' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//houston//MOD21A1N.A2024174.h09v06.061.2024175080147.hdf'
   ))
 
 
@@ -139,9 +138,9 @@ uhi_analysis <- function(raster_path, shapefile_path, buffer_km = 10){
   ))
 }
 
+#initialize to store data from loop below
 stats_df <- data.frame()
 plot_data <- list()
-
 
 #now run the function
 for (city in names(city_modis)){
@@ -186,7 +185,7 @@ for (city in names(city_modis)){
   }
 }
 
-
+stats_df
 
 plot_uhi_results <- function(city_name, year, res)
 {
@@ -281,6 +280,7 @@ for (city in names(plot_data)) {
 }
 
 ######compare climates (arid v humid)########
+library("tidyr") ##adding down here so terra extract works above
 
 #add climate label
 stats_df$Climate <- ifelse(stats_df$City %in% c("phoenix", "vegas"),
