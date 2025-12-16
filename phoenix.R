@@ -1,7 +1,5 @@
 library("terra")
 
-#setting up workflow! goal: for loop or lapply to iterate through locations and dates
-
 #begin with city shapefiles in a list
 city_shps <- list(
   phoenix = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//vegas and phoenix//kx-phoenix-city-boundary-SHP',
@@ -22,15 +20,15 @@ city_modis <- list(
   ),
   orlando = list(
     '2000' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//orlando//MOD21A1N.A2000162.h10v06.061.2020045221848.hdf', #june 10
-    '2024' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//orlando//MOD21A1N.A2024178.h10v06.061.2024180010435.hdf'#june 26
+    '2024' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//orlando//MOD21A1N.A2024185.h10v06.061.2024186080809.hdf' #june 14
   ),
   houston = list(
     '2000' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//houston//MOD21A1N.A2000174.h09v06.061.2020046033705.hdf', #june 22
     '2024' = '//Volumes//GEOG331_F25//espina//Data for Class//final project data//humid//houston//MOD21A1N.A2024174.h09v06.061.2024175080147.hdf'
   ))
 
-
-#now, set up function
+############################################################################
+#set up analysis function
 uhi_analysis <- function(raster_path, shapefile_path, buffer_km = 10){
   data <- rast(raster_path) #load raster (modis tile)
   names(data)
@@ -188,6 +186,8 @@ for (city in names(city_modis)){
 
 stats_df
 
+#############################################################################
+#plot function
 plot_uhi_results <- function(city_name, year, res)
 {
   par(mfrow = c(2,2), mar = c(4, 4, 3, 1) + .1, oma = c(0, 0, 2, 0)) #set margins (in and out)
@@ -280,40 +280,25 @@ for (city in names(plot_data)) {
   }
 }
 
-######compare climates (arid v humid)########
-library("tidyr") ##adding down here so terra extract works above
+###########################################################################
+#compare climates (arid v humid)
+library(tidyr) #adding down here so terra extract works above
 
-#add climate label
-stats_df$Climate <- factor(stats_df$Climate, levels = c("arid","humid"))
+stats_df$Year <- as.integer(stats_df$Year)
 
-# ensure year is numeric if needed
-stats_df$Year <- as.numeric(stats_df$Year)
+climate_map <- c(phoenix="arid", vegas="arid", orlando="humid", houston="humid")
+stats_df$Climate <- factor(climate_map[stats_df$City], levels=c("arid","humid"))
 
-#compare UHI intensity by climate for each year
 t_arid_humid_2000 <- t.test(Mean_Diff_C ~ Climate, data = subset(stats_df, Year == 2000))
 t_arid_humid_2024 <- t.test(Mean_Diff_C ~ Climate, data = subset(stats_df, Year == 2024))
 
 t_arid_humid_2000
 t_arid_humid_2024
 
-#check change over time (2000 vs 2024)
-stats_wide <- pivot_wider(stats_df,
-  id_cols = c(City, Climate),
-  names_from = Year,
-  values_from = Mean_Diff_C)
-
-#keep only rows that have both years
-stats_wide <- stats_wide[complete.cases(stats_wide), ]
-stats_wide
-
-#create Delta_UHI
+stats_wide <- pivot_wider(stats_df, id_cols=c(City, Climate), names_from=Year, values_from=Mean_Diff_C)
+stats_wide <- stats_wide[complete.cases(stats_wide[, c("2000","2024")]), ]
 stats_wide$Delta_UHI <- stats_wide$`2024` - stats_wide$`2000`
 
-#run test
 t_delta <- t.test(Delta_UHI ~ Climate, data = stats_wide)
 t_delta
-
-#check
-stats_df[stats_df$City == "houston", ]
-
-################################################################################
+##############################################################################
