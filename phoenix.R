@@ -1,4 +1,5 @@
 library("terra")
+
 #setting up workflow! goal: for loop or lapply to iterate through locations and dates
 
 #begin with city shapefiles in a list
