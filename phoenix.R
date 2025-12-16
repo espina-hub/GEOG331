@@ -35,8 +35,8 @@ uhi_analysis <- function(raster_path, shapefile_path, buffer_km = 10){
   lst <- data[[1]] #subset to the correct band --> LST currently in K
   city <- vect(shapefile_path) #load shapefile of city boundary
   
-  city_modis <- project(city, crs(lst)) #project shp to raster (sinusoidal)
-  city_unified <- aggregate(city_modis) #merge to one polygon
+  city_projected <- project(city, crs(lst)) #project shp to raster (sinusoidal)
+  city_unified <- aggregate(city_projected) #merge to one polygon
   
   lst_c <- lst - 273.15 #convert values to Celsius
   
@@ -47,8 +47,10 @@ uhi_analysis <- function(raster_path, shapefile_path, buffer_km = 10){
   city_buffer_ring <- erase(city_buffer, city_unified)
   
   #extract values
-  urban_vals <- extract(lst_c, city_unified)[[2]]
-  suburb_vals <- extract(lst_c, city_buffer_ring)[[2]]
+  urban_raw <- extract(lst_c, city_unified)
+  urban_vals <- urban_raw[,2]
+  suburb_raw <- extract(lst_c, city_buffer_ring)
+  suburb_vals <- suburb_raw[,2]
   
   lst_urban_c_clean <- urban_vals[!is.na(urban_vals)]
   lst_suburb_c_clean <- suburb_vals[!is.na(suburb_vals)]
@@ -170,7 +172,10 @@ for (city in names(city_modis)){
     #extract vectors for plotting list
     plot_data[[city]][[yr]] <- list(
       urban_values = res$urban_values,
-      suburb_values = res$suburb_values
+      suburb_values = res$suburb_values,
+      city_boundary = res$city_boundary,
+      suburb_ring = res$suburb_ring,
+      r_path = raster_path
     )
   }
 }
@@ -179,39 +184,28 @@ for (city in names(city_modis)){
 
 plot_uhi_results <- function(city_name, year, res)
 {
-  par(mfrow = c(1,3), mar = c(4, 4, 2, 1) + .1, oma = c(0, 0, 0, 0)) #set margins (in and out)
+  par(mfrow = c(2,2), mar = c(4, 4, 3, 1) + .1, oma = c(0, 0, 2, 0)) #set margins (in and out)
   
   #spatial map
-  #data <- terra::rast(raster_path)
-  #lst_c <- data[[1]] - 273.15
+  r <- rast(res$r_path)
+  lst_raw <- r[[1]] - 273.15
   
-  #plot(lst_c, #raster first
-  # main = "Urban Heat Island Context",
-  #cex.main = 1,
-  #col = hcl.colors(n = 25, palette = "Heat"),
-  #mar = c(3, 3, 2, 6))
+  #crop to suburb extent
+  lst_zoom <- crop(lst_raw, res$suburb_ring)
   
-  #title for grid
-  #  main_title <- paste("UHI Analysis for", city_name, year)
-  #  mtext(main_title, outer = TRUE, cex = 1.5, font = 2)
+  #plot
+  plot(lst_zoom, #raster first
+  main = paste(city_name, year),
+  col = hcl.colors(n = 25, palette = "Heat"),
+  axes = FALSE, box = FALSE,
+  mar = c(2, 2, 2, 4))
   
-  #  plot(res$suburb_ring,
-  #      add = TRUE, 
-  #     border = "blue",
-  #      col = NA,
-  #     lwd = 2)
+  #add polygons
+  plot(res$suburb_ring, add = TRUE, border = "blue", lwd = 2)
+  plot(res$city_boundary, add = TRUE, border = "green", lwd = 2)
   
-  # plot(res$city_boundary, #urban core
-  #   add = TRUE,
-  #    border = "red",
-  #      col = NA,
-  #    lwd = 3)
-  
-  #legend("bottomleft",
-  #     legend = c("Urban Core", "Suburban Ring"),
-  #    lwd = c(3, 2),
-  #   col = c("red", "blue"), 
-  #  bty = "n")
+  legend("bottomleft", legend = c("Urban", "Suburban"), col = c("green", "blue"), lwd = 2,
+         bty = "n", cex = 0.8)
   
   #histograms and plots
   all_vals <- c(res$urban_values, res$suburb_values)
@@ -221,36 +215,42 @@ plot_uhi_results <- function(city_name, year, res)
   dens_suburb <- density(res$suburb_values, na.rm = TRUE)
   
   #calculate y limits
+  max_y_dens <- max(dens_urban$y, dens_suburb$y) * 1.1
+  
   max_y_hist <- max(hist(res$urban_values, breaks = common_breaks, plot = FALSE)$density,
-                    hist(res$suburb_values, breaks = common_breaks, plot = FALSE)$density) * 1.1 #google says good
-  max_y_dens <- max(dens_urban$y, dens_suburb$y) * 1.1 #use 1.1 to make look pretty
+                    hist(res$suburb_values, breaks = common_breaks, plot = FALSE)$density) * 1.1
+ 
+  #density plots
+  plot(dens_urban,
+       col = "tomato", lwd = 3,
+       ylim = c(0, max_y_dens),
+       main = "Density Comparison",
+       xlab = "Temperature (C)", ylab = "Density")
+  lines(dens_suburb, col = "steelblue", lwd = 3)
+  legend("topright",
+         legend = c("Urban", "Suburban"),
+         col = c("tomato", "steelblue"),
+         lwd = 3, bty = "n", cex=0.8)
+  
   
   #urban histogram
   hist(res$urban_values,
        breaks = common_breaks, freq = FALSE, 
        ylim = c(0, max_y_hist),
        col = "tomato",
-       main = "Urban LST Distribution (C)",
+       main = "Urban Distribution",
        xlab = "Temperature (C)")
-  #suburb histogram
+  lines(dens_urban, col = "darkred", lwd = 2)
+ 
+   #suburb histogram
   hist(res$suburb_values,
        breaks = common_breaks, freq = FALSE,
        ylim = c(0, max_y_hist),
        col = "steelblue",
-       main = "Suburban LST Distribution (C)",
+       main = "Suburban Distribution",
        xlab = "Temperature (C)")
+  lines(dens_suburb, col = "darkblue", lwd = 2)
   
-  #density plot
-  plot(dens_urban,
-       col = "tomato", lwd = 3,
-       ylim = c(0, max_y_dens),
-       main = "Urban vs Suburban Density Comparison",
-       xlab = "Temperature (C)", ylab = "Density")
-  lines(dens_suburb, col = "steelblue", lwd = 3)
-  legend("topright",
-         legend = c("Urban", "Suburban"),
-         col = c("tomato", "steelblue"),
-         lwd = 3, bty = "n")
   par(mfrow = c(1,1), mar = c(5, 4, 4, 2) + 0.1, oma = c(0,0,0,0))
 }
 
@@ -260,13 +260,10 @@ for (city in names(plot_data)) {
   for (yr in names(plot_data[[city]])) {
     cat("Generating plots for:", city, "-", yr, "\n")
     
-    #current_raster_path <- city_modis[[city]][[yr]]  
-    
     plot_uhi_results(
       city_name = city,
       year = yr,
-      res = plot_data[[city]][[yr]],
-      #raster_path = current_raster_path
+      res = plot_data[[city]][[yr]]
     )
   }
 }
