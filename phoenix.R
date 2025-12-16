@@ -1,4 +1,5 @@
 library("terra")
+library("tidyr")
 #setting up workflow! goal: for loop or lapply to iterate through locations and dates
 
 #begin with city shapefiles in a list
@@ -32,24 +33,27 @@ city_modis <- list(
 #now, set up function
 uhi_analysis <- function(raster_path, shapefile_path, buffer_km = 10){
   data <- rast(raster_path) #load raster (modis tile)
+  names(data)
   lst <- data[[1]] #subset to the correct band --> LST currently in K
+ 
   city <- vect(shapefile_path) #load shapefile of city boundary
-  
   city_projected <- project(city, crs(lst)) #project shp to raster (sinusoidal)
   city_unified <- aggregate(city_projected) #merge to one polygon
   
   lst_c <- lst - 273.15 #convert values to Celsius
   
-  lst_crop_city_c <- crop(lst_c, city_unified)
   #buffer and suburban ring
   buffer_dist_m <- buffer_km * 1000 #km --> meters so it works in terra
   city_buffer <- buffer(city_unified, width = buffer_dist_m)
   city_buffer_ring <- erase(city_buffer, city_unified)
   
+  #crop
+  lst_crop <- crop(lst_c, city_buffer)
+  
   #extract values
-  urban_raw <- extract(lst_c, city_unified)
+  urban_raw <- extract(lst_crop, city_unified)
   urban_vals <- urban_raw[,2]
-  suburb_raw <- extract(lst_c, city_buffer_ring)
+  suburb_raw <- extract(lst_crop, city_buffer_ring)
   suburb_vals <- suburb_raw[,2]
   
   lst_urban_c_clean <- urban_vals[!is.na(urban_vals)]
@@ -61,11 +65,11 @@ uhi_analysis <- function(raster_path, shapefile_path, buffer_km = 10){
   
   mean_urban <- mean(lst_urban_c_clean)
   mean_suburb <- mean(lst_suburb_c_clean)
-  difference <- mean_urban - mean_suburban #uhi intensity
+  difference <- mean_urban - mean_suburb #uhi intensity
   
   median_urban <- median(lst_urban_c_clean)
   median_suburb <- median(lst_suburb_c_clean)
-  median_diff <- median_urban - median_suburban
+  median_diff <- median_urban - median_suburb
   
   sd_urban <- sd(lst_urban_c_clean)
   sd_suburb <- sd(lst_suburb_c_clean)
@@ -87,6 +91,8 @@ uhi_analysis <- function(raster_path, shapefile_path, buffer_km = 10){
     t_test_result <- t.test(lst_urban_c_clean, lst_suburb_c_clean)
     
     #check normality (shapiro wilk)
+    set.seed(331)
+    
     urban_sample <- sample(lst_urban_c_clean, min(5000, num_urban))
     suburb_sample <- sample(lst_suburb_c_clean, min(5000, num_suburb))
     
@@ -191,14 +197,14 @@ plot_uhi_results <- function(city_name, year, res)
   lst_raw <- r[[1]] - 273.15
   
   #crop to suburb extent
-  lst_zoom <- crop(lst_raw, res$suburb_ring)
+  lst_crop <- crop(lst_raw, res$suburb_ring)
   
   #plot
-  plot(lst_zoom, #raster first
+  plot(lst_crop, #raster first
   main = paste(city_name, year),
   col = hcl.colors(n = 25, palette = "Heat"),
-  axes = FALSE, box = FALSE,
-  mar = c(2, 2, 2, 4))
+  axes = FALSE, box = FALSE)
+  #mar = c(2, 2, 2, 4))
   
   #add polygons
   plot(res$suburb_ring, add = TRUE, border = "blue", lwd = 2)
@@ -209,7 +215,8 @@ plot_uhi_results <- function(city_name, year, res)
   
   #histograms and plots
   all_vals <- c(res$urban_values, res$suburb_values)
-  common_breaks <- pretty(range(all_vals, na.rm = TRUE), n = 40)
+  common_range <- range(all_vals, na.rm = TRUE)
+  common_breaks <- pretty(common_range, n = 40)
   
   dens_urban <- density(res$urban_values, na.rm = TRUE)
   dens_suburb <- density(res$suburb_values, na.rm = TRUE)
@@ -223,6 +230,7 @@ plot_uhi_results <- function(city_name, year, res)
   #density plots
   plot(dens_urban,
        col = "tomato", lwd = 3,
+       xlim = common_range,
        ylim = c(0, max_y_dens),
        main = "Density Comparison",
        xlab = "Temperature (C)", ylab = "Density")
@@ -236,6 +244,7 @@ plot_uhi_results <- function(city_name, year, res)
   #urban histogram
   hist(res$urban_values,
        breaks = common_breaks, freq = FALSE, 
+       xlim = common_range,
        ylim = c(0, max_y_hist),
        col = "tomato",
        main = "Urban Distribution",
@@ -245,6 +254,7 @@ plot_uhi_results <- function(city_name, year, res)
    #suburb histogram
   hist(res$suburb_values,
        breaks = common_breaks, freq = FALSE,
+       xlim = common_range,
        ylim = c(0, max_y_hist),
        col = "steelblue",
        main = "Suburban Distribution",
@@ -253,6 +263,8 @@ plot_uhi_results <- function(city_name, year, res)
   
   par(mfrow = c(1,1), mar = c(5, 4, 4, 2) + 0.1, oma = c(0,0,0,0))
 }
+
+
 
 #next loop for plotting
 for (city in names(plot_data)) {
@@ -267,6 +279,29 @@ for (city in names(plot_data)) {
     )
   }
 }
+
+######compare climates (arid v humid)########
+
+#add climate label
+stats_df$Climate <- ifelse(stats_df$City %in% c("phoenix", "vegas"),
+  "arid","humid")
+
+# ensure year is numeric if needed
+stats_df$Year <- as.numeric(stats_df$Year)
+
+#compare UHI intensity by climate for each year
+t_arid_humid_2000 <- t.test(Mean_Diff_C ~ Climate, data = subset(stats_df, Year == 2000))
+
+t_arid_humid_2024 <- t.test(Mean_Diff_C ~ Climate, data = subset(stats_df, Year == 2024))
+
+t_arid_humid_2000
+t_arid_humid_2024
+
+#check change over time (2000 vs 2024)
+stats_wide <- pivot_wider(stats_df, names_from = Year, values_from = Mean_Diff_C)
+stats_wide$Delta_UHI <- stats_wide$`2024` - stats_wide$`2000`
+t_delta <- t.test(Delta_UHI ~ Climate, data = stats_wide)
+t_delta
 
 
 
