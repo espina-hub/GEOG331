@@ -283,27 +283,36 @@ for (city in names(plot_data)) {
 library("tidyr") ##adding down here so terra extract works above
 
 #add climate label
-stats_df$Climate <- ifelse(stats_df$City %in% c("phoenix", "vegas"),
-  "arid","humid")
+stats_df$Climate <- factor(stats_df$Climate, levels = c("arid","humid"))
 
 # ensure year is numeric if needed
 stats_df$Year <- as.numeric(stats_df$Year)
 
 #compare UHI intensity by climate for each year
 t_arid_humid_2000 <- t.test(Mean_Diff_C ~ Climate, data = subset(stats_df, Year == 2000))
-
 t_arid_humid_2024 <- t.test(Mean_Diff_C ~ Climate, data = subset(stats_df, Year == 2024))
 
 t_arid_humid_2000
 t_arid_humid_2024
 
 #check change over time (2000 vs 2024)
-stats_wide <- pivot_wider(stats_df, names_from = Year, values_from = Mean_Diff_C)
+stats_wide <- pivot_wider(stats_df,
+  id_cols = c(City, Climate),
+  names_from = Year,
+  values_from = Mean_Diff_C)
+
+#keep only rows that have both years
+stats_wide <- stats_wide[complete.cases(stats_wide), ]
+stats_wide
+
+#create Delta_UHI
 stats_wide$Delta_UHI <- stats_wide$`2024` - stats_wide$`2000`
+
+#run test
 t_delta <- t.test(Delta_UHI ~ Climate, data = stats_wide)
 t_delta
 
-
-
+#check
+stats_df[stats_df$City == "houston", ]
 
 ################################################################################
